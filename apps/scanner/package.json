@@ -1,0 +1,27 @@
+{
+  "name": "@veriq/scanner",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Veriq investigation service: passive URL/TLS inspection, threat intelligence, message analysis, grounded AI and report registry relay.",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.6",
+    "@veriq/analysis": "workspace:*",
+    "@veriq/contracts": "workspace:*",
+    "hono": "^4.10.4",
+    "node-html-parser": "^9.0.7",
+    "viem": "^2.57.16",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  }
+}

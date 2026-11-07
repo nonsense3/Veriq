@@ -1,0 +1,18 @@
+{
+  "name": "@veriq/verifier",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Independent verifier for Veriq report bundles. Uses only the bundle file and a read-only chain RPC.",
+  "bin": {
+    "veriq-verify": "./verify.mjs"
+  },
+  "scripts": {
+    "verify": "node verify.mjs",
+    "typecheck": "node --check verify.mjs",
+    "build": "node --check verify.mjs"
+  },
+  "dependencies": {
+    "viem": "^2.57.16"
+  }
+}

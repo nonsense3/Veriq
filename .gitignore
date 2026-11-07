@@ -1,0 +1,33 @@
+node_modules/
+.next/
+out/
+dist/
+.wrangler/
+.dev.vars
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+Thumbs.db
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+# Local scanner store (contains private reports and nonces)
+apps/scanner/.data/
+# Screenshots written by tools/responsive-audit.mjs
+.shots/
+# Hardhat build output
+packages/registry/artifacts/
+packages/registry/cache/
+packages/registry/types/
+# Local chain deployments are machine-specific; testnet records are committed explicitly
+packages/registry/deployments/localhost.json
+# Secrets and local credentials
+*.pem
+*.key
+credentials.json
+# Local project notes stay on disk. The published repository ships README.md only.
+*.md
+!/README.md

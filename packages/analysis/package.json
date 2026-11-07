@@ -1,0 +1,23 @@
+{
+  "name": "@veriq/analysis",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./integrity": "./src/integrity.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@noble/hashes": "^2.0.1",
+    "@veriq/contracts": "workspace:*",
+    "ipaddr.js": "^2.2.0",
+    "tldts": "^7.0.17"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

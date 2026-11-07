@@ -1,0 +1,22 @@
+{
+  "name": "veriq",
+  "version": "0.2.0",
+  "private": true,
+  "packageManager": "pnpm@11.25.0",
+  "scripts": {
+    "dev": "pnpm --filter @veriq/web dev",
+    "dev:scanner": "pnpm --filter @veriq/scanner dev",
+    "dev:api": "pnpm --filter @veriq/api dev",
+    "chain:node": "pnpm --filter @veriq/registry node",
+    "chain:deploy": "pnpm --filter @veriq/registry deploy:local",
+    "verify": "node apps/verifier/verify.mjs",
+    "test": "vitest run",
+    "test:contracts": "pnpm --filter @veriq/registry test",
+    "build": "pnpm --filter @veriq/web build && pnpm -r --filter !@veriq/web build",
+    "typecheck": "pnpm -r typecheck",
+    "check": "pnpm test && pnpm test:contracts && pnpm typecheck && pnpm build"
+  },
+  "devDependencies": {
+    "vitest": "^4.0.8"
+  }
+}

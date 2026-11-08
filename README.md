@@ -65,6 +65,8 @@ The Hardhat node keeps its state in memory. After restarting it, run `pnpm chain
 
 Confirmed reports offer **Receipt** (a JSON chain reference without private evidence) and **Verification bundle** (the private report and nonce used by the independent verifier). Keep the bundle private. The panel links to the Sepolia transaction and contract, displays the record key/fingerprint, and supports sharing a previously private seal without a second blockchain transaction. Publication review cannot hide chain confirmation; pending transactions retain their hashes and are rechecked automatically up to ten times before manual retry.
 
+Repository sharing and removal require the signed-in account that ran the investigation. In **Profile → Your investigations**, use **Remove from repository** and confirm to remove the online listing, public note and community reviews. The private investigation and on-chain fingerprint remain. The existing Supabase foreign key cascades public-review deletion; no new migration is needed. Mobile users can tap the **Investigations** total to jump to their history and use **Show more investigations** for older entries.
+
 ## Checks
 
 ```sh

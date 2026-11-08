@@ -14,7 +14,8 @@ import { RiskBadge } from "@/components/risk";
 import { SiteFooter, SiteHeader } from "@/components/site-header";
 import { SlidingTabs } from "@/components/sliding-tabs";
 import { InlineStatus, useToast } from "@/components/toast";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
+import { remember } from "@/lib/history";
 import { loadHistorySources } from "@/lib/account-history";
 import { useAuth } from "@/lib/auth";
 import { deviceId, type Device } from "@/lib/devices";
@@ -60,6 +61,9 @@ export default function ProfilePage() {
   const [historyLoading, setHistoryLoading] = useState(true);
   const [live, setLive] = useState(false);
   const [historyNote, setHistoryNote] = useState("");
+  const [historyLimit, setHistoryLimit] = useState(12);
+  const [removeSubmission, setRemoveSubmission] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<string | null>(null);
   const [identities, setIdentities] = useState<UserIdentity[]>([]);
   const [hasPassword, setHasPassword] = useState<boolean | null>(null);
   const [devices, setDevices] = useState<Device[] | null>(null);
@@ -90,6 +94,25 @@ export default function ProfilePage() {
   const [confirmEverywhere, setConfirmEverywhere] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteText, setDeleteText] = useState("");
+
+  async function unpublish(reportId: string) {
+    if (!user || removing) return;
+    const owner = user.id;
+    setRemoving(reportId);
+    try {
+      const updated = await api.unpublish(reportId);
+      if (historyOwner.current !== owner) return;
+      historyRequest.current++;
+      historyAbort.current?.abort();
+      setHistoryLoading(false);
+      setItems((current) => current?.map((item) => item.reportId === reportId ? { ...item, published: false } : item) ?? null);
+      remember(updated);
+      setRemoveSubmission(null);
+      say("repository", "success", "Removed from the online repository. Your private investigation and blockchain fingerprint are unchanged.");
+    } catch (caught) {
+      if (historyOwner.current === owner) say("repository", "error", caught instanceof ApiError ? caught.error.message : "Removal could not be confirmed. Please retry.");
+    } finally { setRemoving(null); }
+  }
 
   useEffect(() => {
     if (!loading && configured && !user) router.replace("/sign-in?next=/profile");
@@ -405,8 +428,12 @@ export default function ProfilePage() {
         <div className="stats">
           {([["Investigations", totals.investigations], ["Threats found", totals.threats], ["Sealed on-chain", totals.registered], ["Shared", totals.published]] as const).map(([label, value]) => (
             <div className="stat" key={label}>
-              <span className="eyebrow">{label}</span>
-              <strong>{items ? value : "–"}</strong>
+              {label === "Investigations" ? <>
+                <a className="mobile-stat-jump" href="#your-investigations" onClick={() => window.requestAnimationFrame(() => document.getElementById("your-investigations")?.focus({ preventScroll: true }))}>
+                  <span className="eyebrow">{label}</span><strong>{items ? value : "–"}</strong><span className="muted small">View your investigations ↓</span>
+                </a>
+                <div className="desktop-stat-label"><span className="eyebrow">{label}</span><strong>{items ? value : "–"}</strong></div>
+              </> : <><span className="eyebrow">{label}</span><strong>{items ? value : "–"}</strong></>}
             </div>
           ))}
         </div>
@@ -432,15 +459,17 @@ export default function ProfilePage() {
               </div>
             </section>
 
-            <section aria-labelledby="mine-title" className="card">
+            <section aria-labelledby="mine-title" className="card" id="your-investigations" tabIndex={-1}>
               <div className="card-head" style={{ flexWrap: "wrap" }}><h2 id="mine-title">Your investigations</h2><div style={{ display: "flex", gap: 8 }}><button className="pill pill-ghost pill-sm" disabled={historyLoading} onClick={() => void loadHistory()} type="button">{historyLoading ? "Syncing…" : "Refresh"}</button><Link className="pill pill-ghost pill-sm" href="/dashboard">New</Link></div></div>
               {historyNote && <p className="muted small" role="status" style={{ marginBottom: 10 }}>{historyNote}</p>}
+              {status("repository")}
               {!items ? <p className="muted small" role="status">{historyLoading ? "Loading…" : "History is unavailable. Use Refresh to try again."}</p> : items.length === 0 ? (
                 <p className="empty">{historyLoading ? "Checking the remaining history source…" : historyNote ? "No entries were returned by the available history source." : "Investigations you run while signed in appear here."}</p>
               ) : (
                 <div className="list-rows">
-                  {items.slice(0, 12).map((item) => (
-                    <Link href={`/report?id=${item.reportId}`} key={item.reportId}>
+                  {items.slice(0, historyLimit).map((item) => (
+                    <div className="owned-investigation" key={item.reportId}>
+                    <Link href={`/report?id=${item.reportId}`}>
                       <span style={{ minWidth: 0 }}>
                         <span className="title wrap">{item.subject}</span>
                         <br />
@@ -448,7 +477,13 @@ export default function ProfilePage() {
                       </span>
                       <RiskBadge classification={item.classification} label={item.label} />
                     </Link>
+                    {item.published && (removeSubmission === item.reportId ? <Notice title="Remove this public submission?" tone="warning" actions={<>
+                      <button className="pill pill-dark pill-sm" type="button" disabled={Boolean(removing)} onClick={() => void unpublish(item.reportId)}>{removing === item.reportId ? "Removing…" : "Remove from repository"}</button>
+                      <button className="pill pill-ghost pill-sm" type="button" disabled={Boolean(removing)} onClick={() => setRemoveSubmission(null)}>Cancel</button>
+                    </>}>This removes the online incident, public note and community reviews. Your private investigation stays available. The blockchain fingerprint cannot be deleted.</Notice> : <button className="text-link remove-submission" type="button" disabled={Boolean(removing)} onClick={() => setRemoveSubmission(item.reportId)}><Trash2 size={13} /> Remove from repository</button>)}
+                    </div>
                   ))}
+                  {items.length > historyLimit && <button className="pill pill-ghost pill-sm" type="button" onClick={() => setHistoryLimit((value) => value + 12)}>Show more investigations</button>}
                 </div>
               )}
             </section>

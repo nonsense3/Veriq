@@ -25,7 +25,7 @@ function apiBase(): string {
 
 async function request<T>(path: string, init?: RequestInit & { allowStatuses?: number[] }, schema?: ResponseSchema<T>): Promise<T> {
   const { allowStatuses, ...fetchInit } = init ?? {};
-  return requestJson(`${apiBase()}${path}`, { init: fetchInit, getToken: accessToken, schema, allowStatuses, timeoutMs: init?.method === "POST" ? 100_000 : 20_000 });
+  return requestJson(`${apiBase()}${path}`, { init: fetchInit, getToken: accessToken, schema, allowStatuses, timeoutMs: init?.method === "POST" || init?.method === "DELETE" ? 100_000 : 20_000 });
 }
 
 export const api = {
@@ -36,6 +36,7 @@ export const api = {
   register: (id: string, body: { publishToRepository: boolean; note?: string; confirmPublication?: boolean; transactionHash?: string }) =>
     request<InvestigationResponse>(`/v1/investigations/${encodeURIComponent(id)}/register`, { method: "POST", body: JSON.stringify(body), allowStatuses: [503] }, investigationResponseSchema),
   bundle: (id: string) => request<VerificationBundle>(`/v1/investigations/${encodeURIComponent(id)}/bundle`),
+  unpublish: (id: string) => request<InvestigationResponse>(`/v1/investigations/${encodeURIComponent(id)}/publication`, { method: "DELETE" }, investigationResponseSchema),
   repository: () => request<{ entries: RepositoryEntry[]; clusters: CorrelationCluster[] }>("/v1/repository"),
   incident: (publicId: string) => request<RepositoryDetail>(`/v1/repository/${encodeURIComponent(publicId)}`, undefined, repositoryDetailSchema),
   statement: (publicId: string, body: StatementRequest) =>

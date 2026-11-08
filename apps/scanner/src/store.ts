@@ -53,6 +53,7 @@ export interface Store {
   get(reportId: string): Promise<StoredReport | undefined>;
   byRegistryKey(registryKey: string): Promise<StoredReport | undefined>;
   update(reportId: string, change: (record: StoredReport) => void): Promise<StoredReport | undefined>;
+  removePublication(registryKey: string): Promise<void>;
   byOwner(ownerId: string): Promise<StoredReport[]>;
   removeOwner(ownerId: string): Promise<{ deleted: number; detached: number }>;
   published(): Promise<StoredReport[]>;
@@ -189,6 +190,11 @@ export class SupabaseStore implements Store {
     return rows.map((row) => row.record);
   }
 
+  /** Deleting the projection also deletes its public reviews via the existing foreign key. */
+  async removePublication(registryKey: string) {
+    await this.request(`repository_entries?${postgrestEq("public_id", registryKey)}`, { method: "DELETE", prefer: "return=minimal" });
+  }
+
   async removeOwner(ownerId: string) {
     const owned = await this.byOwner(ownerId);
     const deleted = owned.filter((record) => !record.published).length;
@@ -260,6 +266,10 @@ export class LocalStore implements Store {
     return Object.values(this.data.reports)
       .filter((record) => record.ownerId === ownerId)
       .sort((a, b) => b.report.createdAt.localeCompare(a.report.createdAt));
+  }
+
+  async removePublication(_registryKey: string) {
+    // Local public views read the published flag directly; there is no separate projection.
   }
 
   async removeOwner(ownerId: string) {

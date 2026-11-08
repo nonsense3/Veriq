@@ -259,6 +259,25 @@ export function createApp(store: Store = createStore()) {
     return context.json(bundle);
   });
 
+  app.delete("/v1/investigations/:id/publication", async (context) => {
+    const user = await userFromAuthorization(context.req.header("Authorization"));
+    if (!user) throw new AppError(401, "AUTH_REQUIRED", "Sign in required", "Sign in to remove your repository submission.");
+    if (!writeLimit(user.id).ok) throw new AppError(429, "RATE_LIMITED", "Please wait", "Too many changes. Try again in a minute.", true);
+    const record = await load(context.req.param("id"), context);
+    if (record.ownerId !== user.id) throw new AppError(403, "NOT_OWNER", "Only your own submissions can be removed", "Use the account that ran this investigation.");
+    // Hide API/correlation views first. If projection deletion fails, return an error and allow
+    // an idempotent retry; never claim the public database copy was removed before it was.
+    const updated = (await store.update(record.report.reportId, (item) => {
+      item.published = false;
+      item.note = null;
+      item.statements = [];
+    }))!;
+    await store.removePublication(record.registryKey);
+    const token = bearer(context.req.header("Authorization"));
+    if (token) await syncHistory(token, updated, "update");
+    return context.json(response(updated));
+  });
+
   // Account deletion support: drop the caller's private reports; shared (published) reports are detached
   // from the account and stay in the repository because their fingerprints are already on-chain.
   app.delete("/v1/me", async (context) => {

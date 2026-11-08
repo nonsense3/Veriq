@@ -6,7 +6,7 @@ import { assessMessage } from "../packages/analysis/src/assess";
 import { newNonce, registryKeyFor } from "../packages/analysis/src/integrity";
 import { repositoryDetailSchema } from "../packages/contracts/src/index";
 import { createApp } from "../apps/scanner/src/app";
-import { LocalStore, publicStatements, type StoredReport } from "../apps/scanner/src/store";
+import { LocalStore, SupabaseStore, publicStatements, type StoredReport } from "../apps/scanner/src/store";
 import { EMPTY_RECEIPT, registerCommitment } from "../apps/scanner/src/registry";
 import { userFromAuthorization } from "../apps/scanner/src/auth";
 
@@ -29,6 +29,50 @@ async function fixture(published = false) {
 const post = (body: unknown) => ({ method: "POST", headers: { "content-type": "application/json", authorization: "Bearer mock" }, body: JSON.stringify(body) });
 
 describe("sealed report publishing and community details", () => {
+  it("requires the signed-in owner for publication even when already sealed", async () => {
+    const { app, store } = await fixture();
+    const path = `/v1/investigations/${reportId}/register`;
+    vi.mocked(userFromAuthorization).mockResolvedValue(null);
+    expect((await app.request(path, post({ publishToRepository: true, confirmPublication: true }))).status).toBe(401);
+    vi.mocked(userFromAuthorization).mockResolvedValue({ id: "someone-else", email: null });
+    expect((await app.request(path, post({ publishToRepository: true, confirmPublication: true }))).status).toBe(404);
+    expect((await store.get(reportId))?.published).toBe(false);
+  });
+  it("lets only the owner remove a submission while retaining its private report and chain receipt", async () => {
+    const { app, store } = await fixture(true);
+    const path = `/v1/investigations/${reportId}/publication`;
+    vi.mocked(userFromAuthorization).mockResolvedValue(null);
+    expect((await app.request(path, { method: "DELETE" })).status).toBe(401);
+    vi.mocked(userFromAuthorization).mockResolvedValue({ id: "someone-else", email: null });
+    expect((await app.request(path, { method: "DELETE" })).status).toBe(404);
+    expect((await store.get(reportId))?.published).toBe(true);
+    vi.mocked(userFromAuthorization).mockResolvedValue({ id: "owner", email: null });
+    const result = await app.request(path, { method: "DELETE" });
+    expect(result.status).toBe(200);
+    expect(await result.json()).toMatchObject({ publishedToRepository: false, registry: { status: "confirmed", transactionHash: hash } });
+    expect((await store.get(reportId))?.report.reportId).toBe(reportId);
+    expect((await app.request(`/v1/repository/${key}`)).status).toBe(404);
+    expect(await (await app.request('/v1/repository')).json()).toMatchObject({ entries: [], clusters: [] });
+    expect((await app.request(path, { method: "DELETE" })).status).toBe(200);
+  });
+  it("deletes the Supabase public projection by key and surfaces cleanup failures", async () => {
+    const request = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 204 }));
+    try {
+      const store = new SupabaseStore("https://supabase.invalid", "sb_secret_test_only");
+      await store.removePublication(key);
+      expect(request).toHaveBeenCalledWith(`https://supabase.invalid/rest/v1/repository_entries?public_id=eq.${key}`, expect.objectContaining({ method: "DELETE" }));
+      request.mockResolvedValue(new Response("Unavailable", { status: 503 }));
+      await expect(store.removePublication(key)).rejects.toThrow("HTTP 503");
+    } finally { request.mockRestore(); }
+  });
+  it("allows retry instead of claiming success when projection cleanup fails", async () => {
+    const { app, store } = await fixture(true);
+    const cleanup = vi.spyOn(store, "removePublication").mockRejectedValueOnce(new Error("Projection unavailable"));
+    const path = `/v1/investigations/${reportId}/publication`;
+    expect((await app.request(path, { method: "DELETE" })).status).toBe(500);
+    expect((await app.request(path, { method: "DELETE" })).status).toBe(200);
+    expect(cleanup).toHaveBeenCalledTimes(2);
+  });
   it("shares an already confirmed seal after consent without signing another transaction", async () => {
     const { app, store } = await fixture();
     const request = `/v1/investigations/${reportId}/register`;

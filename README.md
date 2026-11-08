@@ -89,10 +89,17 @@ Veriq solves these challenges through a **5-Step Pipeline** (`Submit → Investi
 
 ## 03. Demo Links and Screenshots
 
+### Watch the Veriq Demo
+
+[![Watch the Veriq demo on YouTube](https://img.youtube.com/vi/6fEhZQk2cC4/hqdefault.jpg)](https://www.youtube.com/watch?v=6fEhZQk2cC4)
+
+**[▶ Watch the full demo on YouTube](https://www.youtube.com/watch?v=6fEhZQk2cC4)**
+
 ### Live Deployment, On-Chain Evidence & Legal Links
 
 | Resource | Details / Link |
 | :--- | :--- |
+| **Demo Video** | [Watch the Veriq demo on YouTube](https://www.youtube.com/watch?v=6fEhZQk2cC4) |
 | **Live Web Application** | [https://veriq.axiomjisu.tech](https://veriq.axiomjisu.tech) |
 | **Scanner API Service** | Deployed on **Render.com** ([https://render.com](https://render.com)) |
 | **Investigation Workspace** | [https://veriq.axiomjisu.tech/dashboard](https://veriq.axiomjisu.tech/dashboard) |

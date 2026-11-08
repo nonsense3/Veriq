@@ -3,8 +3,8 @@
 import { useTheme } from "@/lib/theme";
 
 export function BrandMark({ compact = false }: { compact?: boolean }) {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
+  const { resolved } = useTheme();
+  const isDark = resolved === "dark";
   
   return (
     <span className="brand" aria-label="Veriq">

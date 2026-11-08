@@ -208,7 +208,6 @@ function RegistryCard({ response, onUpdate }: { response: InvestigationResponse;
             <Fingerprint size={15} /> {busy ? walletStep || "Sealing" : walletHash ? "Check transaction" : publish ? "Seal & share" : "Seal report"}
           </button>
           {!walletHash && <button className="pill pill-ghost block" disabled={busy || (publish && !user)} onClick={() => void registerWithWallet()} style={{ marginTop: 8 }} type="button">Seal with wallet</button>}
-          <p className="muted small" style={{ marginTop: 10 }}>Wallet sealing uses test ETH on Sepolia. Only a report fingerprint goes on-chain. A seal proves integrity, not that a verdict is correct.</p>
         </>
       )}
       {error && <div style={{ marginTop: 12 }}><ApiNotice error={error} /></div>}

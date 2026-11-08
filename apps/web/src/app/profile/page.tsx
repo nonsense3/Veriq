@@ -1,12 +1,12 @@
 "use client";
 
 import type { UserIdentity } from "@supabase/supabase-js";
-import { RISK_LABELS, type MyInvestigation, type RiskClass } from "@veriq/contracts";
+import { RISK_LABELS, myInvestigationSchema, type MyInvestigation, type RiskClass } from "@veriq/contracts";
 import { ArrowUpRight, Check, KeyRound, Laptop, LogOut, Mail, Monitor, Moon, Pencil, Sun, Trash2, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CyberScene } from "@/components/gl/cyber-scene";
 import { FieldError, Notice, type Tone } from "@/components/notice";
 import { GitHubIcon, GoogleIcon } from "@/components/provider-icons";
@@ -15,6 +15,7 @@ import { SiteFooter, SiteHeader } from "@/components/site-header";
 import { SlidingTabs } from "@/components/sliding-tabs";
 import { InlineStatus, useToast } from "@/components/toast";
 import { api } from "@/lib/api";
+import { loadHistorySources } from "@/lib/account-history";
 import { useAuth } from "@/lib/auth";
 import { deviceId, type Device } from "@/lib/devices";
 import { passwordScore } from "@/lib/password";
@@ -51,7 +52,12 @@ export default function ProfilePage() {
   const router = useRouter();
   const { configured, loading, user, profile, profileTableMissing, providers, refreshProfile, signOut } = useAuth();
   const { preference, set: setTheme } = useTheme();
-  const [items, setItems] = useState<MyInvestigation[] | null>(null);
+  const [historyItems, setItems] = useState<MyInvestigation[] | null>(null);
+  const historyOwner = useRef<string | null>(null);
+  const historyRequest = useRef(0);
+  const historyAbort = useRef<AbortController | null>(null);
+  const items = historyOwner.current === user?.id ? historyItems : null;
+  const [historyLoading, setHistoryLoading] = useState(true);
   const [live, setLive] = useState(false);
   const [historyNote, setHistoryNote] = useState("");
   const [identities, setIdentities] = useState<UserIdentity[]>([]);
@@ -100,17 +106,36 @@ export default function ProfilePage() {
 
   /** History: realtime rows from Supabase, merged with anything the scanner holds for this account. */
   const loadHistory = useCallback(async () => {
-    if (!supabase) return;
-    const [db, scanner] = await Promise.all([
-      supabase.from("investigations").select("report_id, kind, subject, classification, label, findings, registry_status, published, created_at").order("created_at", { ascending: false }).limit(200),
-      api.mine().catch(() => null),
-    ]);
-    const merged = new Map<string, MyInvestigation>();
-    for (const item of scanner?.items ?? []) merged.set(item.reportId, item);
-    if (!db.error) for (const row of (db.data ?? []) as Row[]) merged.set(row.report_id, fromRow(row));
-    setHistoryNote(db.error ? "Live history needs the Supabase migration; showing the scanner's copy." : "");
-    setItems([...merged.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
-  }, []);
+    const client = supabase;
+    const ownerId = user?.id;
+    if (!client || !ownerId) return;
+    const generation = ++historyRequest.current;
+    historyAbort.current?.abort();
+    const controller = new AbortController();
+    historyAbort.current = controller;
+    if (historyOwner.current !== ownerId) setItems(null);
+    historyOwner.current = ownerId;
+    setHistoryLoading(true);
+    setHistoryNote("");
+    await loadHistorySources({
+      database: async () => {
+        const db = await client.from("investigations").select("report_id, kind, subject, classification, label, findings, registry_status, published, created_at").eq("owner_id", ownerId).order("created_at", { ascending: false }).limit(200).abortSignal(controller.signal);
+        if (db.error) throw new Error("History database unavailable");
+        return ((db.data ?? []) as Row[]).map(row => myInvestigationSchema.parse(fromRow(row)));
+      },
+      scanner: async () => {
+        const result = await api.mine(controller.signal);
+        if (result.user.id !== ownerId) throw new Error("History account mismatch");
+        return result.items;
+      },
+    }, result => {
+      if (generation !== historyRequest.current || historyOwner.current !== ownerId) return;
+      setItems(current => result.available ? result.items : current);
+      setHistoryLoading(result.loading);
+      setHistoryNote(result.note);
+    });
+    controller.abort();
+  }, [user?.id]);
 
   const loadDevices = useCallback(async () => {
     if (!supabase) return;
@@ -131,6 +156,8 @@ export default function ProfilePage() {
       .on("postgres_changes", { event: "*", schema: "public", table: "user_devices", filter: `user_id=eq.${user.id}` }, () => void loadDevices())
       .subscribe((status) => setLive(status === "SUBSCRIBED"));
     return () => {
+      historyRequest.current++;
+      historyAbort.current?.abort();
       void client.removeChannel(channel);
     };
   }, [user, loadIdentities, loadHistory, loadDevices]);
@@ -366,7 +393,7 @@ export default function ProfilePage() {
             <CyberScene align="top" shapes={["fingerprint", "shield"]} />
             <span className="eyebrow" style={{ color: "rgba(255,255,255,.75)" }}>Latest verdict</span>
             <div style={{ display: "grid", gap: 12 }}>
-              <strong className="wrap" style={{ fontSize: "clamp(1.6rem, 2.6vw, 2.3rem)", fontWeight: 400, letterSpacing: "-0.03em", lineHeight: 1.05 }}>{latest ? latest.subject : "No investigations yet"}</strong>
+              <strong className="wrap" style={{ fontSize: "clamp(1.6rem, 2.6vw, 2.3rem)", fontWeight: 400, letterSpacing: "-0.03em", lineHeight: 1.05 }}>{latest ? latest.subject : historyLoading ? "Loading investigations…" : !items ? "History unavailable" : "No investigations yet"}</strong>
               <span style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                 {latest && <RiskBadge classification={latest.classification} label={latest.label} />}
                 <Link className="pill pill-light pill-sm" href={latest ? `/report?id=${latest.reportId}` : "/dashboard"}>{latest ? "Open" : "Start one"} <ArrowUpRight size={13} /></Link>
@@ -393,7 +420,7 @@ export default function ProfilePage() {
               </div>
               <div className="legend">
                 {CLASSES.map((risk) => (
-                  <div key={risk}><span><span className="swatch" style={{ background: CLASS_COLOR[risk] }} />{RISK_LABELS[risk]}</span><b>{totals.byClass[risk] ?? 0}</b></div>
+                  <div key={risk}><span><span className="swatch" style={{ background: CLASS_COLOR[risk] }} />{RISK_LABELS[risk]}</span><b>{items ? totals.byClass[risk] ?? 0 : "–"}</b></div>
                 ))}
               </div>
             </section>
@@ -406,10 +433,10 @@ export default function ProfilePage() {
             </section>
 
             <section aria-labelledby="mine-title" className="card">
-              <div className="card-head"><h2 id="mine-title">Your investigations</h2><Link className="pill pill-ghost pill-sm" href="/dashboard">New</Link></div>
-              {historyNote && <p className="muted small" style={{ marginBottom: 10 }}>{historyNote}</p>}
-              {!items ? <p className="muted small">Loading…</p> : items.length === 0 ? (
-                <p className="empty">Investigations you run while signed in appear here.</p>
+              <div className="card-head" style={{ flexWrap: "wrap" }}><h2 id="mine-title">Your investigations</h2><div style={{ display: "flex", gap: 8 }}><button className="pill pill-ghost pill-sm" disabled={historyLoading} onClick={() => void loadHistory()} type="button">{historyLoading ? "Syncing…" : "Refresh"}</button><Link className="pill pill-ghost pill-sm" href="/dashboard">New</Link></div></div>
+              {historyNote && <p className="muted small" role="status" style={{ marginBottom: 10 }}>{historyNote}</p>}
+              {!items ? <p className="muted small" role="status">{historyLoading ? "Loading…" : "History is unavailable. Use Refresh to try again."}</p> : items.length === 0 ? (
+                <p className="empty">{historyLoading ? "Checking the remaining history source…" : historyNote ? "No entries were returned by the available history source." : "Investigations you run while signed in appear here."}</p>
               ) : (
                 <div className="list-rows">
                   {items.slice(0, 12).map((item) => (

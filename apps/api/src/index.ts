@@ -125,6 +125,7 @@ app.all("/v1/*", async (context) => {
   try {
     const upstream = await fetch(new URL(url.pathname, context.env.SCANNER_ORIGIN), {
       method: context.req.method,
+      signal: AbortSignal.timeout(context.req.method === "POST" ? 90_000 : 15_000),
       headers: {
         "content-type": "application/json",
         "cf-connecting-ip": context.req.header("cf-connecting-ip") ?? "",
@@ -132,6 +133,10 @@ app.all("/v1/*", async (context) => {
       },
       ...(body !== undefined ? { body } : {}),
     });
+    if (!/application\/(?:[a-z0-9.+-]*\+)?json/i.test(upstream.headers.get("content-type") ?? "")) {
+      await upstream.body?.cancel();
+      return context.json(publicError("SCANNER_UNAVAILABLE", "Investigation service unavailable", "The investigation service could not load this request. Please try again shortly.", true), 502);
+    }
     const headers = new Headers({ "content-type": upstream.headers.get("content-type") ?? "application/json" });
     const disposition = upstream.headers.get("content-disposition");
     if (disposition) headers.set("content-disposition", disposition);

@@ -25,7 +25,7 @@ export function decodeApiResponse<T>(payload: unknown, status: number, schema?: 
   throw new ApiError({
     code: "UNEXPECTED_RESPONSE",
     title: "Unexpected service response",
-    message: "The service returned an unexpected response. Your existing report is still available. Please try again later.",
+    message: "The service could not load this request. Please try again shortly.",
     retryable: true,
     correlationId: "client",
   }, status);

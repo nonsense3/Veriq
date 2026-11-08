@@ -102,8 +102,8 @@ img { display: block; max-width: 100%; }
 /* Liquid hover: an oversized rounded blob rises through the button while it spins, so its edge
    reads as a moving wave. The label sits above it (isolation + negative z-index). */
 .pill, .round { position: relative; overflow: hidden; isolation: isolate; --fill: var(--signal); --fill-ink: #fff; }
-.pill::before, .round::before { content: ""; position: absolute; z-index: -1; left: 50%; top: 115%; width: max(260%, 120px); aspect-ratio: 1; border-radius: 43%; background: var(--fill); transform: translateX(-50%) rotate(0deg); transition: top 700ms var(--ease); animation: liquid-spin 2.4s linear infinite paused; pointer-events: none; }
-.pill:focus-visible::before { top: -60%; animation-play-state: running; }
+.pill::before, .round::before { content: ""; position: absolute; z-index: -1; left: 50%; top: 115%; width: max(260%, 120px); aspect-ratio: 1; border-radius: 43%; background: var(--fill); transform: translateX(-50%) rotate(0deg); visibility: hidden; transition: top 700ms var(--ease), visibility 0s 700ms; animation: liquid-spin 2.4s linear infinite paused; pointer-events: none; }
+.pill:focus-visible::before { top: -60%; animation-play-state: running; visibility: visible; transition-delay: 0s; }
 .round::before { width: 200%; }
 @keyframes liquid-spin { to { transform: translateX(-50%) rotate(360deg); } }
 .pill { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; padding: 0 20px; border-radius: 999px; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; border: 1px solid transparent; transition: color 450ms var(--ease), border-color 300ms var(--ease), transform 220ms var(--ease); }
@@ -125,7 +125,7 @@ img { display: block; max-width: 100%; }
 /* Hover styling is gated on a real pointer. On a touch screen :hover latches after a tap, which
    would leave a label in its filled colour over a blob that never recedes. */
 @media (hover: hover) {
-  .pill:hover:not(:disabled)::before, .round:hover::before { top: -60%; animation-play-state: running; }
+  .pill:hover:not(:disabled)::before, .round:hover::before { top: -60%; animation-play-state: running; visibility: visible; transition-delay: 0s; }
   .round:hover::before { top: -40%; }
   .pill:hover:not(:disabled), .round:hover { color: var(--fill-ink); }
   .pill-ghost:hover:not(:disabled) { border-color: transparent; }
@@ -136,7 +136,7 @@ img { display: block; max-width: 100%; }
   .menu-nav a:hover { transform: translateX(6px); color: var(--signal); }
   .menu-quick button:hover { background: var(--surface); }
   .cta-button:hover { color: #fff; transform: scale(1.04); }
-  .cta-button:hover::before { top: -50%; animation-play-state: running; }
+  .cta-button:hover::before { top: -50%; animation-play-state: running; visibility: visible; transition-delay: 0s; }
   .cta-button:hover svg { transform: translateX(6px); }
   .footer-top nav a:hover { opacity: 1; }
   .list-rows a:hover .title { color: var(--signal); }
@@ -429,7 +429,7 @@ img { display: block; max-width: 100%; }
 .cta-art { position: absolute; top: 0; right: 0; width: 46%; height: 60%; overflow: hidden; }
 .cta-stage h2 { position: relative; z-index: 1; font-size: clamp(2.8rem, 7.4vw, 8rem); max-width: 11ch; }
 .cta-button { position: relative; z-index: 1; flex-shrink: 0; overflow: hidden; isolation: isolate; display: grid; place-items: center; align-content: center; gap: 6px; width: clamp(110px, 11vw, 160px); aspect-ratio: 1; border-radius: 50%; background: #fff; color: #0b0c10; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; transition: color 450ms var(--ease), transform 600ms var(--ease); }
-.cta-button::before { content: ""; position: absolute; z-index: -1; left: 50%; top: 110%; width: 220%; aspect-ratio: 1; border-radius: 43%; background: var(--signal); transform: translateX(-50%); transition: top 800ms var(--ease); animation: liquid-spin 2.6s linear infinite paused; }
+.cta-button::before { content: ""; position: absolute; z-index: -1; left: 50%; top: 110%; width: 220%; aspect-ratio: 1; border-radius: 43%; background: var(--signal); transform: translateX(-50%); visibility: hidden; transition: top 800ms var(--ease), visibility 0s 800ms; animation: liquid-spin 2.6s linear infinite paused; }
 
 .cta-button svg { transition: transform 500ms var(--ease); }
 .site-footer { margin-top: 10px; }

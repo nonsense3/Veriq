@@ -400,7 +400,7 @@ img { display: block; max-width: 100%; }
 .stream-stage { min-height: clamp(560px, 70vh, 760px); padding: clamp(20px, 3vw, 44px); display: grid; grid-template-rows: auto 1fr auto; gap: 24px; }
 .stream-top { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
 .stream-top h2 { font-size: clamp(2.2rem, 5vw, 5.4rem); max-width: 11ch; }
-.glass-chip { background: rgba(255, 255, 255, 0.08); color: #fff; backdrop-filter: blur(12px); }
+.meta-chip.glass-chip { background: #202436; color: #f4f6ff; border: 1px solid #46506a; backdrop-filter: blur(12px); }
 .stream-stats { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; align-self: end; }
 .stream-stat strong { display: block; font-size: clamp(2.4rem, 4.4vw, 4.2rem); font-weight: 300; letter-spacing: -0.02em; line-height: 1.05; }
 .stream-stat span { display: block; margin-top: 10px; font-size: 13px; color: rgba(255, 255, 255, 0.72); }
@@ -506,7 +506,8 @@ img { display: block; max-width: 100%; }
 .tone-info .n-icon { background: var(--info); color: var(--surface); }
 .tone-success { background: var(--ok-bg); color: var(--ok); }
 .tone-success .n-icon { background: var(--ok); color: var(--surface); }
-.notice .pill-sm { color: inherit; border-color: currentColor; }
+/* Keep each button variant’s foreground; inheriting the notice tone makes warning text disappear on light buttons. */
+.notice .pill-sm { border-color: currentColor; }
 .field-error { display: flex; gap: 6px; align-items: center; color: var(--bad); font-size: 13px; margin-top: 8px; }
 
 /* --- Report --------------------------------------------------------------------------------- */

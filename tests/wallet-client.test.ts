@@ -29,6 +29,39 @@ describe("wallet sealing", () => {
     expect(calls).toBe(0);
   });
 
+  it("adds an unknown Sepolia chain, switches and verifies it before sending", async () => {
+    let current = "0x1";
+    let added = false;
+    const methods: string[] = [];
+    const provider = { request: async ({ method }: { method: string }) => {
+      methods.push(method);
+      if (method === "eth_requestAccounts") return [`0x${"2".repeat(40)}`];
+      if (method === "eth_chainId") return current;
+      if (method === "wallet_switchEthereumChain") {
+        if (!added) throw Object.assign(new Error("Unknown chain"), { code: 4902 });
+        current = "0xaa36a7"; return null;
+      }
+      if (method === "wallet_addEthereumChain") { added = true; return null; }
+      if (method === "eth_sendTransaction") return `0x${"c".repeat(64)}`;
+      throw Error(method);
+    } } as EIP1193Provider;
+    await sealWithWallet(plan, provider);
+    expect(methods).toContain("wallet_addEthereumChain");
+    expect(methods.indexOf("eth_sendTransaction")).toBeGreaterThan(methods.lastIndexOf("wallet_switchEthereumChain"));
+  });
+
+  it("never submits when a wallet silently fails to switch networks", async () => {
+    const methods: string[] = [];
+    const provider = { request: async ({ method }: { method: string }) => {
+      methods.push(method);
+      if (method === "eth_requestAccounts") return [`0x${"2".repeat(40)}`];
+      if (method === "eth_chainId") return "0x1";
+      return null;
+    } } as EIP1193Provider;
+    await expect(sealWithWallet(plan, provider)).rejects.toThrow("Enable Sepolia");
+    expect(methods).not.toContain("eth_sendTransaction");
+  });
+
   it("turns cancellation, funding and unknown wallet errors into safe messages", () => {
     expect(walletErrorMessage(Error("User rejected request"))).toContain("cancelled");
     expect(walletErrorMessage(Error("insufficient funds"))).toContain("Sepolia test ETH");

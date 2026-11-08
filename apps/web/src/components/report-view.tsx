@@ -161,7 +161,7 @@ function RegistryCard({ response, onUpdate }: { response: InvestigationResponse;
     if (walletHash) return register(false, walletHash);
     setBusy(true);
     setError(null);
-    setWalletStep("Confirm in wallet…");
+    setWalletStep("Choose wallet, then confirm…");
     try {
       const plan = await api.registrationPlan(response.report.reportId);
       const { sealWithWallet } = await import("@/lib/registry-wallet");

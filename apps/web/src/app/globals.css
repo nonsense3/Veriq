@@ -1,4 +1,4 @@
-﻿@import url("https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+﻿@import url("https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@900&display=swap");
 
 /* =============================================================================================
    Veriq visual system. Lusion-inspired: editorial scale, rounded stages, pill controls, stacked
@@ -146,8 +146,9 @@ img { display: block; max-width: 100%; }
 /* --- Header and stacked-card menu ----------------------------------------------------------- */
 .site-header { position: relative; z-index: 50; }
 .site-header .container { display: grid; grid-template-columns: auto 1fr auto; align-items: start; gap: 32px; padding-top: 30px; padding-bottom: 20px; }
-.brand { display: inline-flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; height: 44px; }
-.brand-mark { width: 26px; height: 26px; fill: none; stroke: var(--signal); stroke-width: 2.2; }
+.brand { display: inline-flex; align-items: center; gap: 10px; height: 44px; }
+.brand-mark { width: 32px; height: 32px; object-fit: contain; }
+.brand-name { font-family: 'Orbitron', var(--font); font-size: 22px; font-weight: 900; letter-spacing: -0.01em; }
 .header-tagline { font-size: clamp(1.15rem, 1.9vw, 1.9rem); line-height: 1.25; letter-spacing: -0.005em; max-width: 22ch; padding-top: 4px; }
 .controls-spacer { width: 280px; height: 44px; }
 .controls { position: fixed; z-index: 90; top: 30px; right: max(var(--page-x), calc((100vw - var(--maxw)) / 2 + var(--page-x))); display: flex; gap: 8px; align-items: center; }
@@ -412,6 +413,14 @@ img { display: block; max-width: 100%; }
 .case h3 { font-size: 26px; }
 .case p { font-size: 14px; color: var(--muted); }
 .case .risk { margin-top: auto; align-self: flex-start; }
+/* Center the last (odd) case when single column on small screens */
+@media (max-width: 900px) {
+  .cases { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .cases { grid-template-columns: minmax(0, 1fr); place-items: center; }
+  .case { max-width: 480px; width: 100%; }
+}
 .integrity { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 6fr); gap: 10px; align-items: stretch; }
 .integrity-copy { background: var(--surface); border-radius: var(--r-xl); padding: clamp(24px, 3.4vw, 48px); display: flex; flex-direction: column; justify-content: center; gap: 22px; }
 .integrity-copy h2 { font-size: clamp(2rem, 3.8vw, 3.8rem); }
@@ -530,8 +539,8 @@ img { display: block; max-width: 100%; }
 .finding-toggle .title { flex: 1; font-size: 16px; font-weight: 500; }
 .finding-toggle svg { flex-shrink: 0; transition: transform 300ms var(--ease); color: var(--muted); }
 .finding[data-open="true"] .finding-toggle svg { transform: rotate(45deg); }
-.finding-body { overflow: hidden; }
-.finding-inner { padding: 0 0 18px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; font-size: 14px; }
+.finding-body { overflow: hidden; min-height: 0; }
+.finding-inner { padding: 0 0 18px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; font-size: 14px; min-height: 0; }
 .finding-inner .desc { color: var(--ink-2); }
 .finding-inner .todo { display: flex; gap: 8px; align-items: flex-start; }
 .ai-line { display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; border-radius: var(--r-sm); background: var(--info-bg); color: var(--info); }

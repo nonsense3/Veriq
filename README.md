@@ -38,12 +38,12 @@
 
 ## Team Details — **Axiom**
 
-| # | Name | Role | GitHub Profile |
-| :-: | :--- | :--- | :--- |
-| 1 | **Ankit Dey** | **Team Leader** | [@nonsense3](https://github.com/nonsense3) |
-| 2 | **Sanchari Ganguly** | Team Member | [@sanchari-github](https://github.com/SANCHARI-GANGULY) |
-| 3 | **Rashmi Pyne** | Team Member | [@rashmi-github](https://github.com/rashmi-crypto) |
-| 4 | **Souvik Das** | Team Member | [@souvik-github](https://github.com/dasouvik122005) |
+| # | Name | Role | Key Skills | GitHub Profile |
+| :-: | :--- | :--- | :--- | :--- |
+| 1 | **Ankit Dey** | **Team Leader & Full-Stack Developer** | Next.js, React, TypeScript, Web3, Smart Contracts | [@nonsense3](https://github.com/nonsense3) |
+| 2 | **Sanchari Ganguly** | Frontend Developer & UI/UX Designer | React, Three.js, Motion Design, Responsive UI | [@sanchari-github](https://github.com/SANCHARI-GANGULY) |
+| 3 | **Rashmi Pyne** | Backend Developer & Security Engineer | Node.js, Cryptography, Network Security, APIs | [@rashmi-github](https://github.com/rashmi-crypto) |
+| 4 | **Souvik Das** | Blockchain Developer & Smart Contract Engineer | Solidity, Hardhat, Ethereum, Web3 Integration | [@souvik-github](https://github.com/dasouvik122005) |
 
 ---
 
@@ -53,9 +53,9 @@
 - [02. Problem](#02-problem)
 - [03. Solution](#03-solution)
 - [04. Demo Links and Screenshots](#04-demo-links-and-screenshots)
-- [05. Tech Stack](#05-tech-stack)
-- [06. Architecture](#06-architecture)
-- [07. Setup and Run Steps](#07-setup-and-run-steps)
+- [05. Quick Start - Setup and Run](#05-quick-start---setup-and-run)
+- [06. Tech Stack](#06-tech-stack)
+- [07. Architecture](#07-architecture)
 - [08. Disclosures](#08-disclosures)
 
 ---
@@ -127,98 +127,7 @@ Veriq solves these challenges through a **5-Step Pipeline** (`Submit → Investi
 
 ---
 
-## 05. Tech Stack
-
-| Domain | Technology | Version / Spec | Role & Implementation in Veriq |
-| :--- | :--- | :--- | :--- |
-| **AI & Explainability** | ![Gemma 4](https://img.shields.io/badge/Gemma_4-4285F4?style=flat-square&logo=google&logoColor=white) **Google Gemma 4** | `gemma-4-26b-a4b-it` | Generates plain-language report explanations (`veriq-explain-v2`) grounded in deterministic finding IDs (`F01...`) and performs pre-publication repository reviews (`reviewPublication`). |
-| **AI Runtime & Guardrails** | ![Gemini API](https://img.shields.io/badge/Gemini_API-8E75B2?style=flat-square&logo=googlegemini&logoColor=white) ![Ollama](https://img.shields.io/badge/OpenAI_Compatible-000000?style=flat-square&logo=ollama&logoColor=white) ![Zod](https://img.shields.io/badge/Zod-3E67B1?style=flat-square&logo=zod&logoColor=white) | `v1beta` / `Zod 4.1` | Supports both Google AI Studio (`AI_PROVIDER=google`) and self-hosted Ollama/vLLM (`AI_PROVIDER=openai_compatible`). Zod validates JSON output and strips uncited claims. |
-| **URL & Threat Intelligence** | ![OpenPhish](https://img.shields.io/badge/OpenPhish-EF4444?style=flat-square&logo=academia&logoColor=white) ![URLhaus](https://img.shields.io/badge/URLhaus-B91C1C?style=flat-square&logo=securityscorecard&logoColor=white) ![Safe Browsing](https://img.shields.io/badge/Safe_Browsing_v4-4285F4?style=flat-square&logo=googlechrome&logoColor=white) | Live Feeds & REST v4 | Keyless hourly cached OpenPhish feed, abuse.ch URLhaus malware lookup, and Google Safe Browsing v4 threat match queries. |
-| **Certificate & Domain Intel** | ![crt.sh](https://img.shields.io/badge/crt.sh_CT-0D9488?style=flat-square&logo=letsencrypt&logoColor=white) ![RDAP](https://img.shields.io/badge/RDAP-4F46E5?style=flat-square&logo=icann&logoColor=white) ![OpenSSL](https://img.shields.io/badge/CA_Dataset-721412?style=flat-square&logo=openssl&logoColor=white) | `ca-trust-2026.11.07` | Certificate Transparency log history via `crt.sh`, domain registration age via `rdap.org`, and exact SPKI hash matching for the 8 compromised Oct 2026 eMudhra P-384 intermediate CA keys. |
-| **Web Security & Passive Inspection** | ![Node TLS](https://img.shields.io/badge/node%3Atls_%26_dns-339933?style=flat-square&logo=nodedotjs&logoColor=white) ![ipaddr.js](https://img.shields.io/badge/ipaddr.js-1E293B?style=flat-square&logo=cloudflare&logoColor=38BDF8) ![tldts](https://img.shields.io/badge/tldts-0284C7?style=flat-square&logo=internetarchive&logoColor=white) | `ipaddr.js 2.2` / `tldts 7.0` / `node-html-parser 9.0` | SSRF & bogon IP blocking, socket-level IP pinning against DNS rebinding, 8-hop redirect walking, ASN.1 DER signature OID parsing, IDN punycode/homograph detection, and inert HTML parsing. |
-| **Blockchain & Smart Contracts** | ![Solidity](https://img.shields.io/badge/Solidity-363636?style=flat-square&logo=solidity&logoColor=white) ![Hardhat](https://img.shields.io/badge/Hardhat-FFF100?style=flat-square&logo=ethereum&logoColor=black) ![Sepolia](https://img.shields.io/badge/Sepolia-627EEA?style=flat-square&logo=ethereum&logoColor=white) ![Viem](https://img.shields.io/badge/Viem-1E293B?style=flat-square&logo=ethereum&logoColor=38BDF8) | `Solidity 0.8.28` / `Hardhat 3.21` / `Viem 2.57` | Append-only `ReportRegistry.sol` on Ethereum Sepolia (`11155111`) and local Hardhat (`31337`), EIP-1193 wallet sealing, backend receipt verification, and `@noble/hashes` SHA-256 commitments. |
-| **Frontend Application** | ![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white) ![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB) ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white) ![Three.js](https://img.shields.io/badge/Three.js-000000?style=flat-square&logo=threedotjs&logoColor=white) | `Next.js 16.0` / `React 19.2` / `Three.js 0.187` / `Motion 12` | Static export (`apps/web/out`), interactive WebGL particle shield & 3D evidence network graph, Lenis smooth scroll, Lucide icons, and escaped-text rendering. |
-| **Backend, Edge & Database** | ![Hono](https://img.shields.io/badge/Hono-E36002?style=flat-square&logo=hono&logoColor=white) ![Cloudflare](https://img.shields.io/badge/Workers-F38020?style=flat-square&logo=cloudflareworkers&logoColor=white) ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=black) | `Hono 4.10` / `Wrangler 4.46` / `Supabase 2.81` | Cloudflare Worker edge gateway (`apps/api`), Node.js investigation server (`apps/scanner`), and Supabase PostgreSQL + Auth + Realtime with automatic local JSON fallback (`.data/reports.json`). |
-| **Testing & Monorepo Tooling** | ![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=flat-square&logo=vitest&logoColor=white) ![pnpm](https://img.shields.io/badge/pnpm-F69220?style=flat-square&logo=pnpm&logoColor=white) | `Vitest 4.0` / `pnpm 11.25` | 43+ unit, SSRF boundary, wallet, and scenario tests (`pnpm test`) plus Solidity contract tests (`pnpm test:contracts`). |
-
----
-
-## 06. Architecture
-
-### 6.1 System Topology
-
-```mermaid
-flowchart LR
-    U["Browser (apps/web)<br/>Next.js 16 + React 19 + Three.js"] -->|"JSON /v1/*"| GW["Edge Gateway (apps/api)<br/>Cloudflare Worker"]
-    U -.->|"Local Dev (:8788)"| SC
-    GW -->|"SCANNER_ORIGIN"| SC["Scanner Service (apps/scanner)<br/>Node.js 24 + Hono"]
-    SC --> AN["Deterministic Core (packages/analysis)<br/>Rules · Policy · Correlation · SHA-256"]
-    SC -->|"Pinned Unicast IP"| T[("Target Website<br/>Passive HTTP/TLS Only")]
-    SC --> INTEL["OpenPhish · URLhaus · Safe Browsing<br/>crt.sh · RDAP · CA Trust Dataset"]
-    SC -->|"Findings + <untrusted_content>"| AI["Gemma 4 (26B-A4B-IT)<br/>Explanation & Review Only"]
-    SC <--> DB[("Supabase PostgreSQL<br/>or .data/reports.json")]
-    U -->|"Wallet Seal Tx"| CHAIN[["ReportRegistry.sol<br/>Sepolia (11155111) / Local (31337)"]]
-    SC -->|"Verify Receipt / Relay"| CHAIN
-    V["/verify Browser or apps/verifier CLI"] -->|"Read-Only RPC"| CHAIN
-```
-
-### 6.2 Monorepo Workspaces
-
-| Path | Workspace | Description |
-| :--- | :--- | :--- |
-| [`apps/web`](./apps/web) | `@veriq/web` | Static Next.js 16 frontend (`/`, `/dashboard`, `/report`, `/repository`, `/verify`, `/profile`, `/privacy`, `/terms`). |
-| [`apps/scanner`](./apps/scanner) | `@veriq/scanner` | Node.js passive investigation server, threat intelligence aggregator, Gemma 4 client, and blockchain verifier/relayer. |
-| [`apps/api`](./apps/api) | `@veriq/api` | Cloudflare Worker gateway serving static assets and validating/forwarding `/v1/*` API requests. |
-| [`apps/verifier`](./apps/verifier) | CLI Tool | Zero-dependency standalone verifier (`verify.mjs`) that recomputes commitments and queries the chain directly. |
-| [`packages/analysis`](./packages/analysis) | `@veriq/analysis` | Deterministic URL/TLS/page/message rules, `veriq-policy-2026.11.1`, campaign correlation, CA dataset, and commitment hashing. |
-| [`packages/contracts`](./packages/contracts) | `@veriq/contracts` | Shared Zod 4 schemas and TypeScript types across all workspaces. |
-| [`packages/registry`](./packages/registry) | `@veriq/registry` | Solidity `ReportRegistry.sol` smart contract, Hardhat 3 tests, and local/Sepolia deployment scripts. |
-| [`supabase/migrations`](./supabase/migrations) | SQL Schema | PostgreSQL tables and RLS policies for user profiles, device sessions, realtime investigations, and public repository. |
-| [`tests`](./tests) | Test Suites | Automated unit, SSRF security-boundary, eMudhra scalar derivation, wallet, and required scenario tests (`S1–S3`, `B1–B3`). |
-
-### 6.3 Deterministic Risk Policy (`veriq-policy-2026.11.1`)
-
-| Risk Class | Trigger Condition | Policy Guarantees |
-| :--- | :--- | :--- |
-| **Confirmed Malicious** | $\ge 1$ **authoritative** `high` or `critical` finding (exact URL match in OpenPhish, URLhaus, or Google Safe Browsing). | Preserved even if another non-critical check times out. |
-| **High Risk** | $\ge 1$ `critical` finding (e.g., compromised eMudhra CA key); OR $\ge 2$ `high`; OR $1$ `high` + $\ge 1$ `medium`; OR $\ge 3$ `medium`. | Requires corroborating indicators; urgency alone never triggers High Risk. |
-| **Suspicious** | $1$ `high` finding; OR $\ge 1$ `medium` finding; OR $\ge 4$ `low` threat findings. | Flags anomalous links/messages for manual caution. |
-| **Inconclusive** | No significant threat findings, **and** a core check failed to complete (passive HTTP or external threat intelligence). | Provider outages or unreachable hosts never default to Low Risk. |
-| **Low Risk** | No significant threat findings, **and** all core checks completed. | Always states that Low Risk is not a guarantee of safety; server config findings (`missing HSTS/CSP`) stay in their own dimension. |
-
-### 6.4 Cryptographic Commitment Specification (`veriq-commitment-v1`)
-
-- **Canonical Report Serialization**: $\text{canonical}(R) = \text{JSON with object keys recursively sorted by UTF-16 code units, no whitespace}$
-- **Salted Report Commitment**: $\text{commitment} = \text{SHA-256}(\texttt{"veriq-commitment-v1\textbackslash n"} \;\|\; \text{nonce}_{32\text{ bytes}} \;\|\; \text{UTF-8}(\text{canonical}(R)))$
-- **On-Chain Registry Key**: $\text{registryKey} = \text{SHA-256}(\texttt{"veriq-report-id-v1\textbackslash n"} \;\|\; \text{UTF-8}(\text{reportId}))$
-- **Statement Hash**: $\text{statementHash} = \text{SHA-256}(\texttt{"veriq-statement-v1\textbackslash n"} \;\|\; \text{key} \;\|\; \texttt{"\textbackslash n"} \;\|\; \text{kind} \;\|\; \texttt{"\textbackslash n"} \;\|\; \text{createdAt} \;\|\; \texttt{"\textbackslash n"} \;\|\; \text{note})$
-
-### 6.5 Security & Privacy Controls
-
-| Control Area | Implementation |
-| :--- | :--- |
-| **Safe URL Inspection (SSRF & Rebinding)** | Allows only `http:`/`https:` on ports `80, 443, 8080, 8443`. Normalizes numeric/hex/octal IPs and blocks loopback, RFC 1918, CGNAT, link-local/cloud metadata (`169.254.169.254`), multicast, ULA, IPv4-mapped IPv6, Teredo, 6to4, and NAT64 (`422 DESTINATION_BLOCKED`). Pins the validated IP in Node's socket `lookup` and re-validates every redirect hop (max 8). |
-| **Inert Parsing & Resource Limits** | Never runs target JavaScript, submits forms, or downloads binaries. Reads only `text/html`, `xhtml`, and `text/plain` up to **1.5 MB** post-decompression with an **8 s timeout**, 64 KB API request limit, and per-client rate limiting (12 scans/min). |
-| **AI Prompt Injection Defense** | Isolates untrusted page/message excerpts inside `<untrusted_content>` tags, strips embedded closing tags, provides Gemma 4 zero tools/browsing, validates responses with Zod, discards uncited finding references, and flags prompt-injection text (*"ignore previous instructions"*) as an evasion indicator. |
-| **Privacy & Redaction** | Never stores raw pasted messages; redacts phone numbers, emails, UPI IDs, and wallet addresses for display (`publicText()`) while storing only SHA-256 hashes for correlation. Keeps URLs, evidence, and the 32-byte commitment nonce off-chain. |
-
-### 6.6 Testing Report Summary (`pnpm test` & Live Runs)
-
-| Case | Test Input / Scenario | Expected | Observed | Key Evidence Recorded | Result |
-| :-: | :--- | :--- | :--- | :--- | :-: |
-| **S1** | Impersonation site `sbi-netbanking-secure.com` (valid TLS 1.3, 3-day-old domain, cross-origin OTP form) | `High Risk` | **`High Risk`** | `page.brand_identity_mismatch`, `page.cross_origin_credential_form`, `domain.newly_registered` | PASS |
-| **S2** | Shortened URL $\rightarrow$ 2 redirects $\rightarrow$ final URL listed in OpenPhish | `Confirmed Malicious` | **`Confirmed Malicious`** | `intel.listed_exact` (authoritative, OpenPhish), `redirect.cross_domain`, `url.shortener` | PASS |
-| **S3** | Recruitment scam message (Amazon job lure, ₹999 fee to UPI ID, unofficial link) | `High Risk` | **`High Risk`** | `message.job_fee`, `message.brand_link_mismatch`; UPI ID extracted & redacted | PASS |
-| **B1** | Legitimate HTTPS university site (`jisuniversity.ac.in` / fixture) with full checks | `Low Risk` | **`Low Risk`** | Trusted 4-cert chain, TLS 1.3, CT logged (becomes `Inconclusive` if HTTP/intel offline) | PASS |
-| **B2** | Urgent electricity bill reminder ending with *"Never share your OTP"* | `Low Risk` | **`Low Risk`** | `message.urgency` (low) only; sentence-level negation recognizes protective OTP notice | PASS |
-| **B3** | Small-business site missing HSTS/CSP with certificate expiring in 6 days | `Low Risk` | **`Low Risk`** | `config.missing_hsts`, `config.missing_csp`, `tls.expiring_soon` isolated to Configuration | PASS |
-| **Extra** | Live disclosure host `https://dv-g3b-emudhra.we-have-a-problem.com/` (Oct 2026 eMudhra CA key $d=156$) | `High Risk` | **`High Risk`** | `tls.compromised_ca_key` (`critical`), `tls.distrusted_root` caught despite Node 24 trusting chain | PASS |
-| **SSRF** | `http://127.0.0.1:8545` and `http://169.254.169.254/latest/meta-data` | Blocked (`422`) | **`422 DESTINATION_BLOCKED`** | Refused by `net-policy.ts` prior to socket connection | PASS |
-| **Web3** | Exported bundle verified via `pnpm verify`; then 1 field edited | `VERIFIED` $\rightarrow$ `MISMATCH` | **`✔ VERIFIED` (0) $\rightarrow$ `✘ MISMATCH` (1)** | Recomputed SHA-256 commitment verified against Ethereum Sepolia (`11155111`) & Local Hardhat (`31337`) | PASS |
-
----
-
-## 07. Setup and Run Steps
+## 05. Quick Start - Setup and Run
 
 ### 1. Prerequisites & Installation
 
@@ -273,6 +182,97 @@ pnpm typecheck
 pnpm build
 pnpm check
 ```
+
+---
+
+## 06. Tech Stack
+
+| Domain | Technology | Version / Spec | Role & Implementation in Veriq |
+| :--- | :--- | :--- | :--- |
+| **AI & Explainability** | ![Gemma 4](https://img.shields.io/badge/Gemma_4-4285F4?style=flat-square&logo=google&logoColor=white) **Google Gemma 4** | `gemma-4-26b-a4b-it` | Generates plain-language report explanations (`veriq-explain-v2`) grounded in deterministic finding IDs (`F01...`) and performs pre-publication repository reviews (`reviewPublication`). |
+| **AI Runtime & Guardrails** | ![Gemini API](https://img.shields.io/badge/Gemini_API-8E75B2?style=flat-square&logo=googlegemini&logoColor=white) ![Ollama](https://img.shields.io/badge/OpenAI_Compatible-000000?style=flat-square&logo=ollama&logoColor=white) ![Zod](https://img.shields.io/badge/Zod-3E67B1?style=flat-square&logo=zod&logoColor=white) | `v1beta` / `Zod 4.1` | Supports both Google AI Studio (`AI_PROVIDER=google`) and self-hosted Ollama/vLLM (`AI_PROVIDER=openai_compatible`). Zod validates JSON output and strips uncited claims. |
+| **URL & Threat Intelligence** | ![OpenPhish](https://img.shields.io/badge/OpenPhish-EF4444?style=flat-square&logo=academia&logoColor=white) ![URLhaus](https://img.shields.io/badge/URLhaus-B91C1C?style=flat-square&logo=securityscorecard&logoColor=white) ![Safe Browsing](https://img.shields.io/badge/Safe_Browsing_v4-4285F4?style=flat-square&logo=googlechrome&logoColor=white) | Live Feeds & REST v4 | Keyless hourly cached OpenPhish feed, abuse.ch URLhaus malware lookup, and Google Safe Browsing v4 threat match queries. |
+| **Certificate & Domain Intel** | ![crt.sh](https://img.shields.io/badge/crt.sh_CT-0D9488?style=flat-square&logo=letsencrypt&logoColor=white) ![RDAP](https://img.shields.io/badge/RDAP-4F46E5?style=flat-square&logo=icann&logoColor=white) ![OpenSSL](https://img.shields.io/badge/CA_Dataset-721412?style=flat-square&logo=openssl&logoColor=white) | `ca-trust-2026.11.07` | Certificate Transparency log history via `crt.sh`, domain registration age via `rdap.org`, and exact SPKI hash matching for the 8 compromised Oct 2026 eMudhra P-384 intermediate CA keys. |
+| **Web Security & Passive Inspection** | ![Node TLS](https://img.shields.io/badge/node%3Atls_%26_dns-339933?style=flat-square&logo=nodedotjs&logoColor=white) ![ipaddr.js](https://img.shields.io/badge/ipaddr.js-1E293B?style=flat-square&logo=cloudflare&logoColor=38BDF8) ![tldts](https://img.shields.io/badge/tldts-0284C7?style=flat-square&logo=internetarchive&logoColor=white) | `ipaddr.js 2.2` / `tldts 7.0` / `node-html-parser 9.0` | SSRF & bogon IP blocking, socket-level IP pinning against DNS rebinding, 8-hop redirect walking, ASN.1 DER signature OID parsing, IDN punycode/homograph detection, and inert HTML parsing. |
+| **Blockchain & Smart Contracts** | ![Solidity](https://img.shields.io/badge/Solidity-363636?style=flat-square&logo=solidity&logoColor=white) ![Hardhat](https://img.shields.io/badge/Hardhat-FFF100?style=flat-square&logo=ethereum&logoColor=black) ![Sepolia](https://img.shields.io/badge/Sepolia-627EEA?style=flat-square&logo=ethereum&logoColor=white) ![Viem](https://img.shields.io/badge/Viem-1E293B?style=flat-square&logo=ethereum&logoColor=38BDF8) | `Solidity 0.8.28` / `Hardhat 3.21` / `Viem 2.57` | Append-only `ReportRegistry.sol` on Ethereum Sepolia (`11155111`) and local Hardhat (`31337`), EIP-1193 wallet sealing, backend receipt verification, and `@noble/hashes` SHA-256 commitments. |
+| **Frontend Application** | ![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white) ![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB) ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white) ![Three.js](https://img.shields.io/badge/Three.js-000000?style=flat-square&logo=threedotjs&logoColor=white) | `Next.js 16.0` / `React 19.2` / `Three.js 0.187` / `Motion 12` | Static export (`apps/web/out`), interactive WebGL particle shield & 3D evidence network graph, Lenis smooth scroll, Lucide icons, and escaped-text rendering. |
+| **Backend, Edge & Database** | ![Hono](https://img.shields.io/badge/Hono-E36002?style=flat-square&logo=hono&logoColor=white) ![Cloudflare](https://img.shields.io/badge/Workers-F38020?style=flat-square&logo=cloudflareworkers&logoColor=white) ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=black) | `Hono 4.10` / `Wrangler 4.46` / `Supabase 2.81` | Cloudflare Worker edge gateway (`apps/api`), Node.js investigation server (`apps/scanner`), and Supabase PostgreSQL + Auth + Realtime with automatic local JSON fallback (`.data/reports.json`). |
+| **Testing & Monorepo Tooling** | ![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=flat-square&logo=vitest&logoColor=white) ![pnpm](https://img.shields.io/badge/pnpm-F69220?style=flat-square&logo=pnpm&logoColor=white) | `Vitest 4.0` / `pnpm 11.25` | 43+ unit, SSRF boundary, wallet, and scenario tests (`pnpm test`) plus Solidity contract tests (`pnpm test:contracts`). |
+
+---
+
+## 07. Architecture
+
+### 7.1 System Topology
+
+```mermaid
+flowchart LR
+    U["Browser (apps/web)<br/>Next.js 16 + React 19 + Three.js"] -->|"JSON /v1/*"| GW["Edge Gateway (apps/api)<br/>Cloudflare Worker"]
+    U -.->|"Local Dev (:8788)"| SC
+    GW -->|"SCANNER_ORIGIN"| SC["Scanner Service (apps/scanner)<br/>Node.js 24 + Hono"]
+    SC --> AN["Deterministic Core (packages/analysis)<br/>Rules · Policy · Correlation · SHA-256"]
+    SC -->|"Pinned Unicast IP"| T[("Target Website<br/>Passive HTTP/TLS Only")]
+    SC --> INTEL["OpenPhish · URLhaus · Safe Browsing<br/>crt.sh · RDAP · CA Trust Dataset"]
+    SC -->|"Findings + <untrusted_content>"| AI["Gemma 4 (26B-A4B-IT)<br/>Explanation & Review Only"]
+    SC <--> DB[("Supabase PostgreSQL<br/>or .data/reports.json")]
+    U -->|"Wallet Seal Tx"| CHAIN[["ReportRegistry.sol<br/>Sepolia (11155111) / Local (31337)"]]
+    SC -->|"Verify Receipt / Relay"| CHAIN
+    V["/verify Browser or apps/verifier CLI"] -->|"Read-Only RPC"| CHAIN
+```
+
+### 7.2 Monorepo Workspaces
+
+| Path | Workspace | Description |
+| :--- | :--- | :--- |
+| [`apps/web`](./apps/web) | `@veriq/web` | Static Next.js 16 frontend (`/`, `/dashboard`, `/report`, `/repository`, `/verify`, `/profile`, `/privacy`, `/terms`). |
+| [`apps/scanner`](./apps/scanner) | `@veriq/scanner` | Node.js passive investigation server, threat intelligence aggregator, Gemma 4 client, and blockchain verifier/relayer. |
+| [`apps/api`](./apps/api) | `@veriq/api` | Cloudflare Worker gateway serving static assets and validating/forwarding `/v1/*` API requests. |
+| [`apps/verifier`](./apps/verifier) | CLI Tool | Zero-dependency standalone verifier (`verify.mjs`) that recomputes commitments and queries the chain directly. |
+| [`packages/analysis`](./packages/analysis) | `@veriq/analysis` | Deterministic URL/TLS/page/message rules, `veriq-policy-2026.11.1`, campaign correlation, CA dataset, and commitment hashing. |
+| [`packages/contracts`](./packages/contracts) | `@veriq/contracts` | Shared Zod 4 schemas and TypeScript types across all workspaces. |
+| [`packages/registry`](./packages/registry) | `@veriq/registry` | Solidity `ReportRegistry.sol` smart contract, Hardhat 3 tests, and local/Sepolia deployment scripts. |
+| [`supabase/migrations`](./supabase/migrations) | SQL Schema | PostgreSQL tables and RLS policies for user profiles, device sessions, realtime investigations, and public repository. |
+| [`tests`](./tests) | Test Suites | Automated unit, SSRF security-boundary, eMudhra scalar derivation, wallet, and required scenario tests (`S1–S3`, `B1–B3`). |
+
+### 7.3 Deterministic Risk Policy (`veriq-policy-2026.11.1`)
+
+| Risk Class | Trigger Condition | Policy Guarantees |
+| :--- | :--- | :--- |
+| **Confirmed Malicious** | $\ge 1$ **authoritative** `high` or `critical` finding (exact URL match in OpenPhish, URLhaus, or Google Safe Browsing). | Preserved even if another non-critical check times out. |
+| **High Risk** | $\ge 1$ `critical` finding (e.g., compromised eMudhra CA key); OR $\ge 2$ `high`; OR $1$ `high` + $\ge 1$ `medium`; OR $\ge 3$ `medium`. | Requires corroborating indicators; urgency alone never triggers High Risk. |
+| **Suspicious** | $1$ `high` finding; OR $\ge 1$ `medium` finding; OR $\ge 4$ `low` threat findings. | Flags anomalous links/messages for manual caution. |
+| **Inconclusive** | No significant threat findings, **and** a core check failed to complete (passive HTTP or external threat intelligence). | Provider outages or unreachable hosts never default to Low Risk. |
+| **Low Risk** | No significant threat findings, **and** all core checks completed. | Always states that Low Risk is not a guarantee of safety; server config findings (`missing HSTS/CSP`) stay in their own dimension. |
+
+### 7.4 Cryptographic Commitment Specification (`veriq-commitment-v1`)
+
+- **Canonical Report Serialization**: $\text{canonical}(R) = \text{JSON with object keys recursively sorted by UTF-16 code units, no whitespace}$
+- **Salted Report Commitment**: $\text{commitment} = \text{SHA-256}(\texttt{"veriq-commitment-v1\textbackslash n"} \;\|\; \text{nonce}_{32\text{ bytes}} \;\|\; \text{UTF-8}(\text{canonical}(R)))$
+- **On-Chain Registry Key**: $\text{registryKey} = \text{SHA-256}(\texttt{"veriq-report-id-v1\textbackslash n"} \;\|\; \text{UTF-8}(\text{reportId}))$
+- **Statement Hash**: $\text{statementHash} = \text{SHA-256}(\texttt{"veriq-statement-v1\textbackslash n"} \;\|\; \text{key} \;\|\; \texttt{"\textbackslash n"} \;\|\; \text{kind} \;\|\; \texttt{"\textbackslash n"} \;\|\; \text{createdAt} \;\|\; \texttt{"\textbackslash n"} \;\|\; \text{note})$
+
+### 7.5 Security & Privacy Controls
+
+| Control Area | Implementation |
+| :--- | :--- |
+| **Safe URL Inspection (SSRF & Rebinding)** | Allows only `http:`/`https:` on ports `80, 443, 8080, 8443`. Normalizes numeric/hex/octal IPs and blocks loopback, RFC 1918, CGNAT, link-local/cloud metadata (`169.254.169.254`), multicast, ULA, IPv4-mapped IPv6, Teredo, 6to4, and NAT64 (`422 DESTINATION_BLOCKED`). Pins the validated IP in Node's socket `lookup` and re-validates every redirect hop (max 8). |
+| **Inert Parsing & Resource Limits** | Never runs target JavaScript, submits forms, or downloads binaries. Reads only `text/html`, `xhtml`, and `text/plain` up to **1.5 MB** post-decompression with an **8 s timeout**, 64 KB API request limit, and per-client rate limiting (12 scans/min). |
+| **AI Prompt Injection Defense** | Isolates untrusted page/message excerpts inside `<untrusted_content>` tags, strips embedded closing tags, provides Gemma 4 zero tools/browsing, validates responses with Zod, discards uncited finding references, and flags prompt-injection text (*"ignore previous instructions"*) as an evasion indicator. |
+| **Privacy & Redaction** | Never stores raw pasted messages; redacts phone numbers, emails, UPI IDs, and wallet addresses for display (`publicText()`) while storing only SHA-256 hashes for correlation. Keeps URLs, evidence, and the 32-byte commitment nonce off-chain. |
+
+### 7.6 Testing Report Summary (`pnpm test` & Live Runs)
+
+| Case | Test Input / Scenario | Expected | Observed | Key Evidence Recorded | Result |
+| :-: | :--- | :--- | :--- | :--- | :-: |
+| **S1** | Impersonation site `sbi-netbanking-secure.com` (valid TLS 1.3, 3-day-old domain, cross-origin OTP form) | `High Risk` | **`High Risk`** | `page.brand_identity_mismatch`, `page.cross_origin_credential_form`, `domain.newly_registered` | PASS |
+| **S2** | Shortened URL $\rightarrow$ 2 redirects $\rightarrow$ final URL listed in OpenPhish | `Confirmed Malicious` | **`Confirmed Malicious`** | `intel.listed_exact` (authoritative, OpenPhish), `redirect.cross_domain`, `url.shortener` | PASS |
+| **S3** | Recruitment scam message (Amazon job lure, ₹999 fee to UPI ID, unofficial link) | `High Risk` | **`High Risk`** | `message.job_fee`, `message.brand_link_mismatch`; UPI ID extracted & redacted | PASS |
+| **B1** | Legitimate HTTPS university site (`jisuniversity.ac.in` / fixture) with full checks | `Low Risk` | **`Low Risk`** | Trusted 4-cert chain, TLS 1.3, CT logged (becomes `Inconclusive` if HTTP/intel offline) | PASS |
+| **B2** | Urgent electricity bill reminder ending with *"Never share your OTP"* | `Low Risk` | **`Low Risk`** | `message.urgency` (low) only; sentence-level negation recognizes protective OTP notice | PASS |
+| **B3** | Small-business site missing HSTS/CSP with certificate expiring in 6 days | `Low Risk` | **`Low Risk`** | `config.missing_hsts`, `config.missing_csp`, `tls.expiring_soon` isolated to Configuration | PASS |
+| **Extra** | Live disclosure host `https://dv-g3b-emudhra.we-have-a-problem.com/` (Oct 2026 eMudhra CA key $d=156$) | `High Risk` | **`High Risk`** | `tls.compromised_ca_key` (`critical`), `tls.distrusted_root` caught despite Node 24 trusting chain | PASS |
+| **SSRF** | `http://127.0.0.1:8545` and `http://169.254.169.254/latest/meta-data` | Blocked (`422`) | **`422 DESTINATION_BLOCKED`** | Refused by `net-policy.ts` prior to socket connection | PASS |
+| **Web3** | Exported bundle verified via `pnpm verify`; then 1 field edited | `VERIFIED` $\rightarrow$ `MISMATCH` | **`✔ VERIFIED` (0) $\rightarrow$ `✘ MISMATCH` (1)** | Recomputed SHA-256 commitment verified against Ethereum Sepolia (`11155111`) & Local Hardhat (`31337`) | PASS |
 
 ---
 

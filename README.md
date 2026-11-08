@@ -4,7 +4,7 @@
 
 # Veriq — Verify Before You Trust
 
-**Passive Cybersecurity Investigation, Grounded Gemma 4 AI Explanations, and On-Chain Threat Report Verification**
+**An evidence-first cybersecurity investigation platform that inspects suspicious links, domains, and scam messages through passive network/TLS intelligence, explains findings using grounded Gemma 4 AI, and anchors tamper-evident cryptographic report commitments on the blockchain.**
 
 [![Live App](https://img.shields.io/badge/Live_App-veriq.axiomjisu.tech-2563EB?style=for-the-badge&logo=cloudflare&logoColor=white)](https://veriq.axiomjisu.tech)
 [![Ethereum Sepolia](https://img.shields.io/badge/Ethereum_Testnet-Sepolia-627EEA?style=for-the-badge&logo=ethereum&logoColor=white)](https://sepolia.etherscan.io)
@@ -60,13 +60,7 @@
 
 ---
 
-## 01. Project Name and One-Line Description
-
-**Veriq** — *An evidence-first cybersecurity investigation platform that inspects suspicious links, domains, and scam messages through passive network/TLS intelligence, explains findings using grounded **Gemma 4** AI, and anchors tamper-evident cryptographic report commitments on the Ethereum blockchain.*
-
----
-
-## 02. Problem
+## 01. Problem
 
 | Problem Area | Why Current Approaches Fail |
 | :--- | :--- |
@@ -78,7 +72,7 @@
 
 ---
 
-## 03. Solution
+## 02. Solution
 
 Veriq solves these challenges through a **5-Step Pipeline** (`Submit → Investigate → Analyse → Assess → Verify`) across **6 Analytical Modules**:
 
@@ -93,7 +87,7 @@ Veriq solves these challenges through a **5-Step Pipeline** (`Submit → Investi
 
 ---
 
-## 04. Demo Links and Screenshots
+## 03. Demo Links and Screenshots
 
 ### Live Deployment, On-Chain Evidence & Legal Links
 
@@ -127,7 +121,7 @@ Veriq solves these challenges through a **5-Step Pipeline** (`Submit → Investi
 
 ---
 
-## 05. Quick Start - Setup and Run
+## 04. Quick Start - Setup and Run
 
 ### 1. Prerequisites & Installation
 
@@ -185,7 +179,7 @@ pnpm check
 
 ---
 
-## 06. Tech Stack
+## 05. Tech Stack
 
 | Domain | Technology | Version / Spec | Role & Implementation in Veriq |
 | :--- | :--- | :--- | :--- |
@@ -201,9 +195,9 @@ pnpm check
 
 ---
 
-## 07. Architecture
+## 06. Architecture
 
-### 7.1 System Topology
+### 6.1 System Topology
 
 ```mermaid
 flowchart LR
@@ -220,7 +214,7 @@ flowchart LR
     V["/verify Browser or apps/verifier CLI"] -->|"Read-Only RPC"| CHAIN
 ```
 
-### 7.2 Monorepo Workspaces
+### 6.2 Monorepo Workspaces
 
 | Path | Workspace | Description |
 | :--- | :--- | :--- |
@@ -234,7 +228,7 @@ flowchart LR
 | [`supabase/migrations`](./supabase/migrations) | SQL Schema | PostgreSQL tables and RLS policies for user profiles, device sessions, realtime investigations, and public repository. |
 | [`tests`](./tests) | Test Suites | Automated unit, SSRF security-boundary, eMudhra scalar derivation, wallet, and required scenario tests (`S1–S3`, `B1–B3`). |
 
-### 7.3 Deterministic Risk Policy (`veriq-policy-2026.11.1`)
+### 6.3 Deterministic Risk Policy (`veriq-policy-2026.11.1`)
 
 | Risk Class | Trigger Condition | Policy Guarantees |
 | :--- | :--- | :--- |
@@ -244,14 +238,14 @@ flowchart LR
 | **Inconclusive** | No significant threat findings, **and** a core check failed to complete (passive HTTP or external threat intelligence). | Provider outages or unreachable hosts never default to Low Risk. |
 | **Low Risk** | No significant threat findings, **and** all core checks completed. | Always states that Low Risk is not a guarantee of safety; server config findings (`missing HSTS/CSP`) stay in their own dimension. |
 
-### 7.4 Cryptographic Commitment Specification (`veriq-commitment-v1`)
+### 6.4 Cryptographic Commitment Specification (`veriq-commitment-v1`)
 
 - **Canonical Report Serialization**: $\text{canonical}(R) = \text{JSON with object keys recursively sorted by UTF-16 code units, no whitespace}$
 - **Salted Report Commitment**: $\text{commitment} = \text{SHA-256}(\texttt{"veriq-commitment-v1\textbackslash n"} \;\|\; \text{nonce}_{32\text{ bytes}} \;\|\; \text{UTF-8}(\text{canonical}(R)))$
 - **On-Chain Registry Key**: $\text{registryKey} = \text{SHA-256}(\texttt{"veriq-report-id-v1\textbackslash n"} \;\|\; \text{UTF-8}(\text{reportId}))$
 - **Statement Hash**: $\text{statementHash} = \text{SHA-256}(\texttt{"veriq-statement-v1\textbackslash n"} \;\|\; \text{key} \;\|\; \texttt{"\textbackslash n"} \;\|\; \text{kind} \;\|\; \texttt{"\textbackslash n"} \;\|\; \text{createdAt} \;\|\; \texttt{"\textbackslash n"} \;\|\; \text{note})$
 
-### 7.5 Security & Privacy Controls
+### 6.5 Security & Privacy Controls
 
 | Control Area | Implementation |
 | :--- | :--- |
@@ -260,7 +254,7 @@ flowchart LR
 | **AI Prompt Injection Defense** | Isolates untrusted page/message excerpts inside `<untrusted_content>` tags, strips embedded closing tags, provides Gemma 4 zero tools/browsing, validates responses with Zod, discards uncited finding references, and flags prompt-injection text (*"ignore previous instructions"*) as an evasion indicator. |
 | **Privacy & Redaction** | Never stores raw pasted messages; redacts phone numbers, emails, UPI IDs, and wallet addresses for display (`publicText()`) while storing only SHA-256 hashes for correlation. Keeps URLs, evidence, and the 32-byte commitment nonce off-chain. |
 
-### 7.6 Testing Report Summary (`pnpm test` & Live Runs)
+### 6.6 Testing Report Summary (`pnpm test` & Live Runs)
 
 | Case | Test Input / Scenario | Expected | Observed | Key Evidence Recorded | Result |
 | :-: | :--- | :--- | :--- | :--- | :-: |
@@ -276,9 +270,9 @@ flowchart LR
 
 ---
 
-## 08. Disclosures
+## 07. Used things
 
-| Category | Disclosed Items |
+| Category | Used Things |
 | :--- | :--- |
 | **Open-Source Libraries** | `next` (`16.0.1`), `react` (`19.2.0`), `three` (`0.187.0`), `motion` (`12.23.24`), `lenis` (`1.3.27`), `lucide-react` (`0.552.0`), `@supabase/supabase-js` (`2.81.1`), `viem` (`2.57.16`), `hono` (`4.10.4`), `node-html-parser` (`9.0.7`), `zod` (`4.1.12`), `@noble/hashes` (`2.0.1`), `ipaddr.js` (`2.2.0`), `tldts` (`7.0.17`), `hardhat` (`3.21.2`), `solidity` (`0.8.28`), `vitest` (`4.0.8`). |
 | **Templates** | None. All UI components, WebGL shaders, deterministic analysis rules, and Solidity contracts were custom-built during HackMatrix '26 (Nov 7–10, 2026). |

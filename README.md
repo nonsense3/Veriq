@@ -38,12 +38,12 @@
 
 ## Team Details — **Axiom**
 
-| # | Name | Role | Key Skills | GitHub Profile |
-| :-: | :--- | :--- | :--- | :--- |
-| 1 | **Ankit Dey** | **Team Leader & Full-Stack Developer** | Next.js, React, TypeScript, Web3, Smart Contracts | [@nonsense3](https://github.com/nonsense3) |
-| 2 | **Sanchari Ganguly** | Frontend Developer & UI/UX Designer | React, Three.js, Motion Design, Responsive UI | [@sanchari-github](https://github.com/SANCHARI-GANGULY) |
-| 3 | **Rashmi Pyne** | Backend Developer & Security Engineer | Node.js, Cryptography, Network Security, APIs | [@rashmi-github](https://github.com/rashmi-crypto) |
-| 4 | **Souvik Das** | Blockchain Developer & Smart Contract Engineer | Solidity, Hardhat, Ethereum, Web3 Integration | [@souvik-github](https://github.com/dasouvik122005) |
+| # | Name | Role | GitHub Profile |
+| :-: | :--- | :--- | :--- |
+| 1 | **Ankit Dey** | **Team Leader** | [@ankit-github](https://github.com/nonsense3) |
+| 2 | **Sanchari Ganguly** | **Team Member** | [@sanchari-github](https://github.com/SANCHARI-GANGULY) |
+| 3 | **Rashmi Pyne** | **Team Member** | [@rashmi-github](https://github.com/rashmi-crypto) |
+| 4 | **Souvik Das** | **Team Member** | [@souvik-github](https://github.com/dasouvik122005) |
 
 ---
 

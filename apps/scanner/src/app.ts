@@ -3,6 +3,7 @@ import {
   investigationRequestSchema,
   registerRequestSchema,
   statementRequestSchema,
+  REPORT_SCHEMA_VERSION,
   type InvestigationResponse,
   type MyInvestigationsResponse,
   type RepositoryEntry,
@@ -20,7 +21,7 @@ import { config } from "./config";
 import { AppError } from "./errors";
 import { intelProviderStatus } from "./intel/providers";
 import { investigateMessage, investigateUrl } from "./pipeline";
-import { addStatementOnChain, registerCommitment, registryState } from "./registry";
+import { addStatementOnChain, confirmWalletCommitment, registerCommitment, registryState } from "./registry";
 import { registryRelayerStatus } from "./registry-key";
 import { correlationRecords, createStore, postgrestEq, publicSummary, type Store, type StoredReport } from "./store";
 
@@ -94,6 +95,7 @@ export function createApp(store: Store = createStore()) {
   const app = new Hono<Env>();
   const investigateLimit = rateLimiter(12, 60_000);
   const writeLimit = rateLimiter(10, 60_000);
+  const relayLimit = rateLimiter(3, 60_000);
 
   app.use("*", async (context, next) => {
     context.set("correlationId", crypto.randomUUID());
@@ -145,6 +147,7 @@ export function createApp(store: Store = createStore()) {
     const parsed = investigationRequestSchema.safeParse(body);
     if (!parsed.success) throw new AppError(400, "INVALID_REQUEST", "Check your submission", parsed.error.issues[0]?.message ?? "The request is invalid.");
     const user = await userFromAuthorization(context.req.header("Authorization"));
+    if (context.req.header("Authorization") && !user) throw new AppError(401, "AUTH_REQUIRED", "Sign in again", "Your session could not be verified. Sign in again before submitting a private investigation.", true);
     const record = parsed.data.kind === "url" ? await investigateUrl(store, parsed.data, user?.id ?? null) : await investigateMessage(store, parsed.data, user?.id ?? null);
     const token = bearer(context.req.header("Authorization"));
     if (user && token) void syncHistory(token, record, "insert");
@@ -165,11 +168,36 @@ export function createApp(store: Store = createStore()) {
 
   app.get("/v1/investigations/:id", async (context) => context.json(response(await load(context.req.param("id"), context))));
 
+  // Only opaque commitments leave this endpoint. No signing key or verification nonce is released.
+  app.get("/v1/investigations/:id/registration", async (context) => {
+    const record = await load(context.req.param("id"), context);
+    const state = await registryState();
+    if ("error" in state) throw new AppError(503, "REGISTRY_UNAVAILABLE", "Report sealing unavailable", "The report registry could not be reached. Please try again later.", true);
+    const parent = record.report.parentReportId ? await store.get(record.report.parentReportId) : undefined;
+    return context.json({
+      chainId: state.chainId,
+      contractAddress: state.address,
+      registryKey: record.registryKey,
+      commitment: computeCommitment(record.report, record.nonce),
+      parentKey: parent?.registry.status === "confirmed" ? parent.registryKey : ZERO_BYTES32,
+      schemaVersion: REPORT_SCHEMA_VERSION,
+    });
+  });
+
   app.post("/v1/investigations/:id/register", async (context) => {
     const limit = writeLimit(clientKey(context));
     if (!limit.ok) throw new AppError(429, "RATE_LIMITED", "Slow down", `Try again in ${limit.retryAfter} seconds.`, true);
     const record = await load(context.req.param("id"), context);
-    const options = registerRequestSchema.parse((await context.req.json().catch(() => ({}))) ?? {});
+    const parsed = registerRequestSchema.safeParse(await context.req.json().catch(() => null));
+    if (!parsed.success) throw new AppError(400, "INVALID_REQUEST", "Check your request", "The registration request is invalid.");
+    const options = parsed.data;
+    // Public scans are anonymous; spending the server's gas requires a verified account.
+    // Wallet confirmations spend the caller's test ETH and do not need a server signing key.
+    if (!options.transactionHash) {
+      const signer = await userFromAuthorization(context.req.header("Authorization"));
+      if (!signer) throw new AppError(401, "AUTH_REQUIRED", "Sign in or use your wallet", "Sign in to use the sealing service, or choose Seal with wallet to pay with Sepolia test ETH.");
+      if (!relayLimit(signer.id).ok) throw new AppError(429, "RATE_LIMITED", "Please wait", "The sealing service allows three requests per account per minute. Try again later or use your wallet.", true);
+    }
     if (options.publishToRepository) {
       const publisher = await userFromAuthorization(context.req.header("Authorization"));
       if (!publisher) throw new AppError(401, "AUTH_REQUIRED", "Sign in required", "Sign in before sharing a report to the repository.");
@@ -196,7 +224,9 @@ export function createApp(store: Store = createStore()) {
     const parentKey = (parent?.registry.status === "confirmed" ? parent.registryKey : ZERO_BYTES32) as Hex;
     const commitment = computeCommitment(record.report, record.nonce) as Hex;
     await store.update(record.report.reportId, (item) => { item.registry = { ...item.registry, status: "pending", registryKey: item.registryKey, commitment }; });
-    const receipt = await registerCommitment(record.registryKey as Hex, commitment, parentKey);
+    const receipt = options.transactionHash
+      ? await confirmWalletCommitment(record.registryKey as Hex, commitment, parentKey, options.transactionHash as Hex)
+      : await registerCommitment(record.registryKey as Hex, commitment, parentKey);
     const updated = (await store.update(record.report.reportId, (item) => {
       item.registry = receipt;
       if (receipt.status === "confirmed" && options.publishToRepository) {

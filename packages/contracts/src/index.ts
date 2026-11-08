@@ -395,6 +395,17 @@ export const registerRequestSchema = z.object({
   note: z.string().trim().max(280).optional(),
   /** Set only after the signer has seen the model review and chosen to publish. */
   confirmPublication: z.boolean().optional(),
+  /** A wallet-submitted transaction. The backend independently checks its receipt and commitment. */
+  transactionHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/).optional(),
+});
+
+export const registrationPlanSchema = z.object({
+  chainId: z.number().int().positive(),
+  contractAddress: z.string().regex(/^0x[0-9a-fA-F]{40}$/),
+  registryKey: z.string().regex(/^0x[0-9a-f]{64}$/),
+  commitment: z.string().regex(/^0x[0-9a-f]{64}$/),
+  parentKey: z.string().regex(/^0x[0-9a-f]{64}$/),
+  schemaVersion: z.literal(REPORT_SCHEMA_VERSION),
 });
 
 export const statementRequestSchema = z.object({
@@ -517,6 +528,7 @@ export type RegistryReceipt = z.infer<typeof registryReceiptSchema>;
 export type VerificationBundle = z.infer<typeof verificationBundleSchema>;
 export type PublicationReview = z.infer<typeof publicationReviewSchema>;
 export type RegisterRequest = z.infer<typeof registerRequestSchema>;
+export type RegistrationPlan = z.infer<typeof registrationPlanSchema>;
 export type StatementRequest = z.infer<typeof statementRequestSchema>;
 export type RepositoryEntry = z.infer<typeof repositoryEntrySchema>;
 export type CorrelationCluster = z.infer<typeof correlationClusterSchema>;

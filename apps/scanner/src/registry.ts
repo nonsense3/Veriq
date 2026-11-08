@@ -1,5 +1,5 @@
 import { REPORT_SCHEMA_VERSION, type RegistryReceipt } from "@veriq/contracts";
-import { createPublicClient, createWalletClient, defineChain, http, parseAbi, type Address, type Hex } from "viem";
+import { createPublicClient, createWalletClient, decodeEventLog, defineChain, http, parseAbi, type Address, type Hex } from "viem";
 import { config } from "./config";
 import { registryAccount } from "./registry-key";
 
@@ -39,8 +39,8 @@ export async function registryState(): Promise<RegistryState> {
       const chainId = await client.getChainId();
       const code = await client.getCode({ address: config.registry.contractAddress as Address });
       state = code && code !== "0x" ? { chainId, address: config.registry.contractAddress as Address } : { error: `No contract code at ${config.registry.contractAddress} on chain ${chainId}. Redeploy the registry.` };
-    } catch (error) {
-      state = { error: `Registry RPC unreachable at ${config.registry.rpcUrl} (${(error as Error).message.split("\n")[0]}).` };
+    } catch {
+      state = { error: "Registry RPC unreachable. Check the backend network configuration." };
     }
   }
   cached = { at: Date.now(), state };
@@ -62,6 +62,39 @@ async function clients() {
     publicClient: createPublicClient({ chain, transport: http(config.registry.rpcUrl, { timeout: 10_000 }) }),
     walletClient: createWalletClient({ chain, account, transport: http(config.registry.rpcUrl, { timeout: 10_000 }) }),
   };
+}
+
+/** Receipt confirmation uses the configured chain and contract; it never trusts a client "success" flag. */
+export async function confirmWalletCommitment(registryKey: Hex, commitment: Hex, parentKey: Hex, transactionHash: Hex): Promise<RegistryReceipt> {
+  const state = await registryState();
+  if ("error" in state) return { ...EMPTY_RECEIPT, registryKey, commitment, transactionHash, status: "unavailable", error: "The report registry could not be reached." };
+  const client = createPublicClient({ transport: http(config.registry.rpcUrl, { timeout: 10_000 }) });
+  return confirmWalletReceipt(client, state, registryKey, commitment, parentKey, transactionHash);
+}
+
+/** The receipt and current record must agree before a wallet submission is accepted. */
+export async function confirmWalletReceipt(client: Pick<ReturnType<typeof createPublicClient>, "waitForTransactionReceipt" | "readContract">, state: { chainId: number; address: Address }, registryKey: Hex, commitment: Hex, parentKey: Hex, transactionHash: Hex): Promise<RegistryReceipt> {
+  const base: RegistryReceipt = { ...EMPTY_RECEIPT, registryKey, commitment, parentKey: /^0x0+$/.test(parentKey) ? null : parentKey, transactionHash };
+  const configured = { ...base, chainId: state.chainId, contractAddress: state.address };
+  try {
+    const receipt = await client.waitForTransactionReceipt({ hash: transactionHash, confirmations: 2, timeout: 25_000 });
+    if (receipt.status !== "success") return { ...configured, status: "failed", error: "The wallet transaction reverted. No seal was confirmed." };
+    const record = await client.readContract({ address: state.address, abi: REGISTRY_ABI, functionName: "getRecord", args: [registryKey] });
+    const eventMatches = receipt.logs.some((log) => {
+      if (log.address.toLowerCase() !== state.address.toLowerCase()) return false;
+      try {
+        const event = decodeEventLog({ abi: REGISTRY_ABI, eventName: "ReportRegistered", data: log.data, topics: log.topics });
+        return event.args.key === registryKey && event.args.commitment === commitment && event.args.parent === parentKey && event.args.schemaVersion === REPORT_SCHEMA_VERSION && event.args.registrar.toLowerCase() === record[2].toLowerCase();
+      } catch { return false; }
+    });
+    if (!eventMatches || record[0] !== commitment || record[1] !== parentKey || record[3] === 0n || record[4] !== REPORT_SCHEMA_VERSION) {
+      return { ...configured, status: "failed", error: "This transaction does not seal this report at the configured registry." };
+    }
+    return { ...configured, status: "confirmed", blockNumber: Number(receipt.blockNumber), registeredAt: new Date(Number(record[3]) * 1000).toISOString(), error: null };
+  } catch {
+    // Keep the hash so the same transaction can be checked again without spending gas twice.
+    return { ...configured, status: "pending", error: "The transaction could not be confirmed yet. Check it again in a moment." };
+  }
 }
 
 export async function registerCommitment(registryKey: Hex, commitment: Hex, parentKey: Hex): Promise<RegistryReceipt> {

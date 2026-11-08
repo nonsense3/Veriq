@@ -51,12 +51,30 @@ describe("owned report privacy boundary", () => {
     const reportId = "00000000-0000-4000-8000-000000000099";
     await store.save({ report: assessMessage({ reportId, createdAt: new Date().toISOString(), text: "Your meeting begins tomorrow." }), nonce: newNonce(), registryKey: registryKeyFor(reportId), registry: { ...EMPTY_RECEIPT }, published: true, note: null, keys: [], shingles: [], statements: [], ownerId: "private-owner" });
     const privateApp = createApp(store);
-    for (const [suffix, method] of [["", "GET"], ["/bundle", "GET"], ["/register", "POST"]]) {
+    for (const [suffix, method] of [["", "GET"], ["/bundle", "GET"], ["/registration", "GET"], ["/register", "POST"]]) {
       const result = await privateApp.request(`/v1/investigations/${reportId}${suffix}`, { method });
       expect(result.status).toBe(401);
       expect(result.headers.get("cache-control")).toBe("no-store");
       expect(await result.json()).toMatchObject({ code: "AUTH_REQUIRED" });
     }
+  });
+
+  it("does not silently downgrade an unverifiable signed-in submission to anonymous storage", async () => {
+    const result = await app.request("/v1/investigations", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer invalid-session" }, body: JSON.stringify({ kind: "message", text: "A private appointment reminder for tomorrow." }) });
+    expect(result.status).toBe(401);
+    expect(await result.json()).toMatchObject({ code: "AUTH_REQUIRED" });
+  });
+
+  it("rejects malformed wallet transaction hashes before reaching the chain", async () => {
+    const store = new LocalStore(mkdtempSync(join(tmpdir(), "veriq-wallet-input-")));
+    const reportId = "00000000-0000-4000-8000-000000000077";
+    await store.save({ report: assessMessage({ reportId, createdAt: new Date().toISOString(), text: "Your meeting begins tomorrow." }), nonce: newNonce(), registryKey: registryKeyFor(reportId), registry: { ...EMPTY_RECEIPT }, published: false, note: null, keys: [], shingles: [], statements: [], ownerId: null });
+    const walletApp = createApp(store);
+    const malformed = await walletApp.request(`/v1/investigations/${reportId}/register`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ transactionHash: "not-a-transaction" }) });
+    expect(malformed.status).toBe(400);
+    const relay = await walletApp.request(`/v1/investigations/${reportId}/register`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ publishToRepository: false }) });
+    expect(relay.status).toBe(401);
+    expect((await store.get(reportId))?.registry.status).toBe("unregistered");
   });
 
   it("refuses repository publication and statements without a signed-in owner", async () => {

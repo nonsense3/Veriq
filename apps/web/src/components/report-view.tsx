@@ -1,10 +1,10 @@
 "use client";
 
-import type { Finding, InvestigationResponse, PublicError, PublicationReview, RegistryReceipt, Report } from "@veriq/contracts";
+import { RISK_DESCRIPTIONS, type Finding, type InvestigationResponse, type PublicError, type PublicationReview, type RegistryReceipt, type Report } from "@veriq/contracts";
 import { ArrowRight, Download, ExternalLink, Fingerprint, Link2, Plus, Printer, RefreshCcw, ShieldCheck, Sparkles } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { remember } from "@/lib/history";
@@ -86,19 +86,34 @@ function RegistryCard({ response, onUpdate }: { response: InvestigationResponse;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<PublicError | null>(null);
   const [review, setReview] = useState<PublicationReview | null>(null);
+  const [walletHash, setWalletHash] = useState<string | null>(null);
+  const [walletStep, setWalletStep] = useState("");
   const registry: RegistryReceipt = response.registry;
+  const pendingKey = `veriq.pending-seal.${response.report.reportId}`;
 
-  async function register(confirmPublication = false) {
+  useEffect(() => {
+    try {
+      const saved = window.sessionStorage.getItem(pendingKey);
+      if (saved && /^0x[0-9a-fA-F]{64}$/.test(saved)) setWalletHash(saved);
+    } catch { /* Session storage is optional. */ }
+  }, [pendingKey]);
+
+  async function register(confirmPublication = false, transactionHash = walletHash ?? undefined) {
     setBusy(true);
     setError(null);
     try {
-      const updated = await api.register(response.report.reportId, { publishToRepository: publish, confirmPublication, ...(note.trim() ? { note: note.trim() } : {}) });
+      const updated = await api.register(response.report.reportId, { publishToRepository: publish, confirmPublication, ...(transactionHash ? { transactionHash } : {}), ...(note.trim() ? { note: note.trim() } : {}) });
       onUpdate(updated);
       remember(updated);
       setReview(null);
+      if (updated.registry.status === "confirmed") {
+        setWalletHash(null);
+        try { window.sessionStorage.removeItem(pendingKey); } catch { /* Optional. */ }
+      }
       if (updated.registry.status !== "confirmed") {
         const keyProblem = updated.registry.error?.startsWith("REGISTRY_PRIVATE_KEY ");
-        setError({ code: updated.registry.status === "unavailable" ? "REGISTRY_UNAVAILABLE" : "REGISTRY_FAILED", title: keyProblem ? "Report sealing unavailable" : updated.registry.status === "unavailable" ? "Registry offline" : "Registration failed", message: keyProblem ? "We couldn’t register this report on-chain. Your report is still available. Please try again later." : "Your report is safe. Try registering again in a moment.", retryable: true, correlationId: "client" });
+        const pending = updated.registry.status === "pending";
+        setError({ code: pending ? "REGISTRY_PENDING" : updated.registry.status === "unavailable" ? "REGISTRY_UNAVAILABLE" : "REGISTRY_FAILED", title: pending ? "Waiting for confirmation" : keyProblem ? "Report sealing unavailable" : updated.registry.status === "unavailable" ? "Registry offline" : "Registration failed", message: pending ? "Your transaction was submitted. Check it again before sending another transaction." : keyProblem ? "We couldn’t register this report on-chain. Your report is still available. You can seal with your wallet instead." : "Your report is still available. Please try again later.", retryable: true, correlationId: "client" });
       }
     } catch (caught) {
       const apiError = caught instanceof ApiError ? caught.error : { code: "UNEXPECTED_ERROR", title: "Registration failed", message: "Try again in a moment.", retryable: true, correlationId: "client" };
@@ -106,6 +121,31 @@ function RegistryCard({ response, onUpdate }: { response: InvestigationResponse;
       else setError(apiError);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function registerWithWallet() {
+    if (walletHash) return register(false, walletHash);
+    setBusy(true);
+    setError(null);
+    setWalletStep("Confirm in wallet…");
+    try {
+      const plan = await api.registrationPlan(response.report.reportId);
+      const { sealWithWallet } = await import("@/lib/registry-wallet");
+      const hash = await sealWithWallet(plan);
+      setWalletHash(hash);
+      try { window.sessionStorage.setItem(pendingKey, hash); } catch { /* Optional. */ }
+      setWalletStep("Checking transaction…");
+      await register(false, hash);
+    } catch (caught) {
+      if (caught instanceof ApiError) setError(caught.error);
+      else {
+        const { walletErrorMessage } = await import("@/lib/registry-wallet");
+        setError({ code: "WALLET_REQUEST_FAILED", title: "Wallet seal not completed", message: walletErrorMessage(caught), retryable: true, correlationId: "client" });
+      }
+    } finally {
+      setBusy(false);
+      setWalletStep("");
     }
   }
 
@@ -134,6 +174,8 @@ function RegistryCard({ response, onUpdate }: { response: InvestigationResponse;
         <dl className="kv">
           <div><dt>Chain</dt><dd>{registry.chainId}</dd></div>
           <div><dt>Transaction</dt><dd className="mono">{short(registry.transactionHash)}</dd></div>
+          {registry.chainId === 11155111 && registry.transactionHash && <div><dt>Receipt</dt><dd><a href={`https://sepolia.etherscan.io/tx/${registry.transactionHash}`} rel="noopener noreferrer" target="_blank">View on Sepolia <ExternalLink size={12} /></a></dd></div>}
+          <div><dt>Contract</dt><dd className="mono">{short(registry.contractAddress)}</dd></div>
           <div><dt>Block</dt><dd>{registry.blockNumber}</dd></div>
           <div><dt>Repository</dt><dd>{response.publishedToRepository ? "Published" : "Private"}</dd></div>
         </dl>
@@ -163,8 +205,10 @@ function RegistryCard({ response, onUpdate }: { response: InvestigationResponse;
             </Notice>
           )}
           <button className="pill pill-signal block" disabled={busy || (publish && !user)} onClick={() => void register(false)} style={{ marginTop: 10 }} type="button">
-            <Fingerprint size={15} /> {busy ? "Sealing" : publish ? "Seal & share" : "Seal report"}
+            <Fingerprint size={15} /> {busy ? walletStep || "Sealing" : walletHash ? "Check transaction" : publish ? "Seal & share" : "Seal report"}
           </button>
+          {!walletHash && <button className="pill pill-ghost block" disabled={busy || (publish && !user)} onClick={() => void registerWithWallet()} style={{ marginTop: 8 }} type="button">Seal with wallet</button>}
+          <p className="muted small" style={{ marginTop: 10 }}>Wallet sealing uses test ETH on Sepolia. Only a report fingerprint goes on-chain. A seal proves integrity, not that a verdict is correct.</p>
         </>
       )}
       {error && <div style={{ marginTop: 12 }}><ApiNotice error={error} /></div>}
@@ -302,7 +346,8 @@ export function ReportView({ initial }: { initial: InvestigationResponse }) {
             <h1 id="verdict-title">{report.risk.label}</h1>
             <p className="verdict-subject" style={{ marginTop: 10 }}>{report.subject.display}</p>
           </div>
-          <p className="verdict-summary">{summary}</p>
+          <p className="verdict-summary">{RISK_DESCRIPTIONS[report.risk.classification]}</p>
+          <p className="muted">{summary}</p>
           <div className="meta-chips">
             <span className="meta-chip"><span>Confidence</span> {report.risk.confidence}</span>
             <span className="meta-chip"><span>Checks</span> {report.coverage.completed}/{report.coverage.total}</span>

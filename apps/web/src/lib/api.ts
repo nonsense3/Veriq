@@ -7,9 +7,10 @@ import type {
   ServiceConfig,
   StatementRequest,
   VerificationBundle,
+  RegistrationPlan,
 } from "@veriq/contracts";
 import { accessToken } from "./auth";
-import { investigationResponseSchema, repositoryEntrySchema } from "@veriq/contracts";
+import { investigationResponseSchema, registrationPlanSchema, repositoryEntrySchema } from "@veriq/contracts";
 import { ApiError, decodeApiResponse, type ResponseSchema } from "./api-response";
 export { ApiError } from "./api-response";
 
@@ -41,7 +42,8 @@ export const api = {
   config: () => request<ServiceConfig>("/v1/config"),
   investigate: (body: InvestigationRequest) => request<InvestigationResponse>("/v1/investigations", { method: "POST", body: JSON.stringify(body) }, investigationResponseSchema),
   report: (id: string) => request<InvestigationResponse>(`/v1/investigations/${encodeURIComponent(id)}`, undefined, investigationResponseSchema),
-  register: (id: string, body: { publishToRepository: boolean; note?: string; confirmPublication?: boolean }) =>
+  registrationPlan: (id: string) => request<RegistrationPlan>(`/v1/investigations/${encodeURIComponent(id)}/registration`, undefined, registrationPlanSchema),
+  register: (id: string, body: { publishToRepository: boolean; note?: string; confirmPublication?: boolean; transactionHash?: string }) =>
     request<InvestigationResponse>(`/v1/investigations/${encodeURIComponent(id)}/register`, { method: "POST", body: JSON.stringify(body), allowStatuses: [503] }, investigationResponseSchema),
   bundle: (id: string) => request<VerificationBundle>(`/v1/investigations/${encodeURIComponent(id)}/bundle`),
   repository: () => request<{ entries: RepositoryEntry[]; clusters: CorrelationCluster[] }>("/v1/repository"),

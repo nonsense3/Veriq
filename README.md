@@ -49,14 +49,13 @@
 
 ## Table of Contents
 
-- [01. Project Name and One-Line Description](#01-project-name-and-one-line-description)
-- [02. Problem](#02-problem)
-- [03. Solution](#03-solution)
-- [04. Demo Links and Screenshots](#04-demo-links-and-screenshots)
-- [05. Quick Start - Setup and Run](#05-quick-start---setup-and-run)
-- [06. Tech Stack](#06-tech-stack)
-- [07. Architecture](#07-architecture)
-- [08. Disclosures](#08-disclosures)
+- [01. Problem](#01-problem)
+- [02. Solution](#02-solution)
+- [03. Demo Links and Screenshots](#03-demo-links-and-screenshots)
+- [04. Quick Start - Setup and Run](#04-quick-start---setup-and-run)
+- [05. Tech Stack](#05-tech-stack)
+- [06. Architecture](#06-architecture)
+- [07. Disclosures](#07-disclosures)
 
 ---
 

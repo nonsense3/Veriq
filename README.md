@@ -296,7 +296,7 @@ flowchart LR
 
 ## 08. Track
 
-**AI-Powered Web Threat Detection & Digital Trust Intelligence**
+**<h2>AI-Powered Web Threat Detection & Digital Trust Intelligence.</h2>**
 
 Veriq combines the track's three domains:
 

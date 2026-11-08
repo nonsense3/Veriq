@@ -10,7 +10,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Veriq | Verify before you trust",
-  icons: { icon: "/icon.svg" },
+  icons: { icon: "/Icy White VQ Shield Logo.png" },
   description: "Investigate suspicious links, domains and messages. Evidence-backed risk reports with verifiable on-chain integrity.",
 };
 

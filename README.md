@@ -106,7 +106,6 @@ Veriq solves these challenges through a **5-Step Pipeline** (`Submit → Investi
 | **Privacy Policy** | [![Privacy Policy](https://img.shields.io/badge/Read_Privacy_Policy-veriq.axiomjisu.tech%2Fprivacy-2563EB?style=flat-square&logo=shield&logoColor=white)](https://veriq.axiomjisu.tech/privacy) |
 | **Terms of Service** | [![Terms of Service](https://img.shields.io/badge/Read_Terms_of_Service-veriq.axiomjisu.tech%2Fterms-2563EB?style=flat-square&logo=bookstack&logoColor=white)](https://veriq.axiomjisu.tech/terms) |
 | **Blockchain Network** | [![Ethereum Sepolia Testnet](https://img.shields.io/badge/Ethereum_Testnet-Sepolia_(11155111)-627EEA?style=flat-square&logo=ethereum&logoColor=white)](https://sepolia.etherscan.io) & Local Hardhat (`31337`) |
-| **Smart Contract** | `ReportRegistry.sol` ([`packages/registry/contracts/ReportRegistry.sol`](./packages/registry/contracts/ReportRegistry.sol)) |
 | **Public Verification RPC** | `https://ethereum-sepolia-rpc.publicnode.com` / `http://127.0.0.1:8545` |
 
 ---

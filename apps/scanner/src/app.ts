@@ -18,6 +18,7 @@ import type { Hex } from "viem";
 import { aiEnabled, reviewPublication } from "./ai/explain";
 import { authConfigured, bearer, supabaseAsUser, userFromAuthorization } from "./auth";
 import { config } from "./config";
+import { createHealthRouter } from "./routes/health";
 import { AppError } from "./errors";
 import { intelProviderStatus } from "./intel/providers";
 import { investigateMessage, investigateUrl } from "./pipeline";
@@ -124,7 +125,7 @@ export function createApp(store: Store = createStore()) {
   );
   app.use("/v1/*", bodyLimit({ maxSize: 64 * 1024, onError: () => { throw new AppError(413, "PAYLOAD_TOO_LARGE", "Too much text", "Submissions are limited to 64 KB."); } }));
 
-  app.get("/health", (context) => context.json({ status: "ok", service: "veriq-scanner", storage: store.backend, timestamp: new Date().toISOString() }));
+  app.route("/", createHealthRouter(store.backend));
 
   app.get("/v1/config", async (context) => {
     const state = await registryState();

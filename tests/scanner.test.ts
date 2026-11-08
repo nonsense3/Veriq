@@ -13,6 +13,12 @@ const app = createApp(new LocalStore(mkdtempSync(join(tmpdir(), "veriq-test-")))
 const investigate = (body: unknown) => app.request("/v1/investigations", { method: "POST", body: JSON.stringify(body), headers: { "Content-Type": "application/json" } });
 
 describe("scanner safe URL inspection boundary", () => {
+  it("mounts the health router on the running scanner app", async () => {
+    const response = await app.request("/health");
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(await response.json()).toMatchObject({ status: "ok", service: "veriq-scanner" });
+  });
   it("refuses loopback, private and metadata destinations before connecting", async () => {
     for (const target of ["http://127.0.0.1/", "http://10.1.2.3/", "http://169.254.169.254/latest/meta-data/", "http://[::1]/", "http://2130706433/", "http://[::ffff:127.0.0.1]/"]) {
       const response = await investigate({ kind: "url", target });

@@ -1,5 +1,5 @@
 import type { PageEvidence, RedirectHop, UrlEvidence } from "@veriq/contracts";
-import { BRANDS, URL_SHORTENERS, findBrandMentions, isOfficialDomain } from "../brands";
+import { BRANDS, URL_SHORTENERS, findBrandMentions, isOfficialDomain, sharedHostingPlatform } from "../brands";
 import { draft, type FindingDraft } from "../finding";
 import { AI_INSTRUCTION_PATTERN } from "../message";
 import { registrableDomainOf } from "../url";
@@ -25,7 +25,8 @@ export function analyzeRedirects(u: UrlEvidence, hops: RedirectHop[]): FindingDr
   const startDomain = u.registrableDomain ?? u.hostname;
   if (final && followed.length > 1) {
     const finalDomain = registrableDomainOf(final.host) ?? final.host;
-    if (finalDomain !== startDomain) {
+    const sameOperator = !sharedHostingPlatform(u.hostname) && !sharedHostingPlatform(final.host) && BRANDS.some(brand => isOfficialDomain(brand, startDomain, u.hostname) && isOfficialDomain(brand, finalDomain, final.host));
+    if (finalDomain !== startDomain && !sameOperator) {
       const fromShortener = URL_SHORTENERS.has(u.hostname) || URL_SHORTENERS.has(startDomain);
       findings.push(draft({
         ruleId: "redirect.cross_domain", category: "redirect", severity: fromShortener ? "low" : "medium",
@@ -83,7 +84,10 @@ export function analyzePage(u: UrlEvidence, page: PageEvidence): FindingDraft[] 
   }
   const finalDomain = registrableDomainOf(finalHost) ?? finalHost;
   const finalIsHttps = page.finalUrl.startsWith("https://");
-  const claimed = findBrandMentions(`${page.title ?? ""} ${page.textExcerpt.slice(0, 1500)}`).filter((brand) => !isOfficialDomain(brand, finalDomain, finalHost));
+  // Passing mentions and social sign-in options are not identity claims.
+  const titleBrands = findBrandMentions(page.title ?? "");
+  const hasOwnIdentity = !sharedHostingPlatform(finalHost) && titleBrands.some(brand => isOfficialDomain(brand, finalDomain, finalHost));
+  const claimed = hasOwnIdentity ? [] : titleBrands.filter(brand => !isOfficialDomain(brand, finalDomain, finalHost));
   const credentialForms = page.forms.filter((form) => form.hasPassword || form.hasOtpField || form.hasPaymentField);
 
   if (credentialForms.length && claimed.length) {
@@ -100,7 +104,7 @@ export function analyzePage(u: UrlEvidence, page: PageEvidence): FindingDraft[] 
   } else if (claimed.length && page.title && findBrandMentions(page.title).some((brand) => claimed.includes(brand))) {
     const brand = findBrandMentions(page.title).find((item) => claimed.includes(item))!;
     findings.push(draft({
-      ruleId: "page.brand_in_title", category: "phishing", severity: "low",
+      ruleId: "page.brand_in_title", category: "phishing", severity: "info",
       title: `Page title references ${brand.name}`,
       description: `The title "${page.title}" names ${brand.name}, but the page is on ${finalDomain}.`,
       impact: "Third-party pages mention brands legitimately; this is only meaningful together with other findings.",
@@ -111,7 +115,8 @@ export function analyzePage(u: UrlEvidence, page: PageEvidence): FindingDraft[] 
 
   for (const form of credentialForms) {
     const actionDomain = form.actionHost ? (registrableDomainOf(form.actionHost) ?? form.actionHost) : finalDomain;
-    if (actionDomain !== finalDomain) {
+    const sameOperator = !sharedHostingPlatform(finalHost) && !sharedHostingPlatform(form.actionHost ?? finalHost) && BRANDS.some(brand => isOfficialDomain(brand, finalDomain, finalHost) && isOfficialDomain(brand, actionDomain, form.actionHost ?? undefined));
+    if (actionDomain !== finalDomain && !sameOperator) {
       findings.push(draft({
         ruleId: "page.cross_origin_credential_form", category: "phishing", severity: "high",
         title: "Sensitive form submits to a different domain",
@@ -133,7 +138,7 @@ export function analyzePage(u: UrlEvidence, page: PageEvidence): FindingDraft[] 
     }
   }
 
-  const borrowed = BRANDS.filter((brand) => !isOfficialDomain(brand, finalDomain, finalHost) && page.resourceDomains.some((domain) => isOfficialDomain(brand, registrableDomainOf(domain), domain)) && claimed.includes(brand));
+  const borrowed = BRANDS.filter((brand) => !isOfficialDomain(brand, finalDomain, finalHost) && page.resourceDomains.some((domain) => isOfficialDomain(brand, registrableDomainOf(domain), domain)) && claimed.includes(brand) && credentialForms.length > 0);
   for (const brand of borrowed.slice(0, 2)) {
     findings.push(draft({
       ruleId: "page.borrowed_brand_assets", category: "phishing", severity: "medium",
@@ -178,7 +183,7 @@ export function analyzePage(u: UrlEvidence, page: PageEvidence): FindingDraft[] 
   }
   if (page.scriptRedirectHint) {
     findings.push(draft({
-      ruleId: "page.script_redirect", category: "redirect", severity: "low",
+      ruleId: "page.script_redirect", category: "redirect", severity: "info",
       title: "Page contains script-driven navigation",
       description: "Inline script changes the page location. Veriq does not execute scripts, so the destination was not observed.",
       impact: "The real destination may differ from what was inspected.",

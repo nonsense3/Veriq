@@ -2,7 +2,7 @@ import type { EvidenceConfidence, Finding, FindingCategory, Severity } from "@ve
 
 export type FindingDraft = Omit<Finding, "id">;
 
-export const RULESET_VERSION = "veriq-rules-2026.11.1";
+export const RULESET_VERSION = "veriq-rules-2026.11.2";
 
 type DraftInput = {
   ruleId: string;

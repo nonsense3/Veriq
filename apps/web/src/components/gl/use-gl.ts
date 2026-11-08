@@ -142,7 +142,7 @@ export function useGL(factory: GLFactory, options: { maxDpr?: number; sceneKey?:
       };
       document.addEventListener("visibilitychange", onVisibility);
       const onPointer = (event: PointerEvent) => {
-        if (event.pointerType !== "mouse" || tier === "low" || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) { scene.pointer?.(-1, -1); return; }
+        if (event.pointerType !== "mouse" || reduce || !inView || !visible || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) { scene.pointer?.(-1, -1); return; }
         const rect = host.getBoundingClientRect();
         if (!rect.width || !rect.height) return;
         scene.pointer?.((event.clientX - rect.left) / rect.width, (event.clientY - rect.top) / rect.height);
@@ -151,8 +151,10 @@ export function useGL(factory: GLFactory, options: { maxDpr?: number; sceneKey?:
       const inputPreference = window.matchMedia("(hover: hover) and (pointer: fine)");
       inputPreference.addEventListener("change", onLeave);
       window.addEventListener("scroll", onLeave, { passive: true });
-      host.addEventListener("pointermove", onPointer, { passive: true });
-      host.addEventListener("pointerleave", onLeave);
+      // Decorative layers must not block pointer tracking or intercept page controls.
+      window.addEventListener("pointermove", onPointer, { passive: true });
+      document.documentElement.addEventListener("pointerleave", onLeave);
+      window.addEventListener("blur", onLeave);
       const onMotionChange = () => { reduce = motionPreference.matches; if (reduce) { pause(); still(); } else play(); };
       motionPreference.addEventListener("change", onMotionChange);
       const onLost = (event: Event) => {
@@ -171,8 +173,9 @@ export function useGL(factory: GLFactory, options: { maxDpr?: number; sceneKey?:
         resizeObserver.disconnect();
         intersection.disconnect();
         document.removeEventListener("visibilitychange", onVisibility);
-        host.removeEventListener("pointermove", onPointer);
-        host.removeEventListener("pointerleave", onLeave);
+        window.removeEventListener("pointermove", onPointer);
+        document.documentElement.removeEventListener("pointerleave", onLeave);
+        window.removeEventListener("blur", onLeave);
         inputPreference.removeEventListener("change", onLeave);
         window.removeEventListener("scroll", onLeave);
         motionPreference.removeEventListener("change", onMotionChange);

@@ -93,6 +93,7 @@ Veriq solves these challenges through a **5-Step Pipeline** (`Submit → Investi
 | Resource | Details / Link |
 | :--- | :--- |
 | **Live Web Application** | [https://veriq.axiomjisu.tech](https://veriq.axiomjisu.tech) |
+| **Scanner API Service** | Deployed on **Render.com** ([https://render.com](https://render.com)) |
 | **Investigation Workspace** | [https://veriq.axiomjisu.tech/dashboard](https://veriq.axiomjisu.tech/dashboard) |
 | **Public Threat Repository** | [https://veriq.axiomjisu.tech/repository](https://veriq.axiomjisu.tech/repository) |
 | **Independent Browser Verifier** | [https://veriq.axiomjisu.tech/verify](https://veriq.axiomjisu.tech/verify) |
@@ -189,7 +190,7 @@ pnpm check
 | **Web Security & Passive Inspection** | ![Node TLS](https://img.shields.io/badge/node%3Atls_%26_dns-339933?style=flat-square&logo=nodedotjs&logoColor=white) ![ipaddr.js](https://img.shields.io/badge/ipaddr.js-1E293B?style=flat-square&logo=cloudflare&logoColor=38BDF8) ![tldts](https://img.shields.io/badge/tldts-0284C7?style=flat-square&logo=internetarchive&logoColor=white) | `ipaddr.js 2.2` / `tldts 7.0` / `node-html-parser 9.0` | SSRF & bogon IP blocking, socket-level IP pinning against DNS rebinding, 8-hop redirect walking, ASN.1 DER signature OID parsing, IDN punycode/homograph detection, and inert HTML parsing. |
 | **Blockchain & Smart Contracts** | ![Solidity](https://img.shields.io/badge/Solidity-363636?style=flat-square&logo=solidity&logoColor=white) ![Hardhat](https://img.shields.io/badge/Hardhat-FFF100?style=flat-square&logo=ethereum&logoColor=black) ![Sepolia](https://img.shields.io/badge/Sepolia-627EEA?style=flat-square&logo=ethereum&logoColor=white) ![Viem](https://img.shields.io/badge/Viem-1E293B?style=flat-square&logo=ethereum&logoColor=38BDF8) | `Solidity 0.8.28` / `Hardhat 3.21` / `Viem 2.57` | Append-only `ReportRegistry.sol` on Ethereum Sepolia (`11155111`) and local Hardhat (`31337`), EIP-1193 wallet sealing, backend receipt verification, and `@noble/hashes` SHA-256 commitments. |
 | **Frontend Application** | ![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white) ![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB) ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white) ![Three.js](https://img.shields.io/badge/Three.js-000000?style=flat-square&logo=threedotjs&logoColor=white) | `Next.js 16.0` / `React 19.2` / `Three.js 0.187` / `Motion 12` | Static export (`apps/web/out`), interactive WebGL particle shield & 3D evidence network graph, Lenis smooth scroll, Lucide icons, and escaped-text rendering. |
-| **Backend, Edge & Database** | ![Hono](https://img.shields.io/badge/Hono-E36002?style=flat-square&logo=hono&logoColor=white) ![Cloudflare](https://img.shields.io/badge/Workers-F38020?style=flat-square&logo=cloudflareworkers&logoColor=white) ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=black) | `Hono 4.10` / `Wrangler 4.46` / `Supabase 2.81` | Cloudflare Worker edge gateway (`apps/api`), Node.js investigation server (`apps/scanner`), and Supabase PostgreSQL + Auth + Realtime with automatic local JSON fallback (`.data/reports.json`). |
+| **Backend, Edge & Database** | ![Hono](https://img.shields.io/badge/Hono-E36002?style=flat-square&logo=hono&logoColor=white) ![Cloudflare](https://img.shields.io/badge/Workers-F38020?style=flat-square&logo=cloudflareworkers&logoColor=white) ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=black) ![Render](https://img.shields.io/badge/Render-46E3B7?style=flat-square&logo=render&logoColor=white) | `Hono 4.10` / `Wrangler 4.46` / `Supabase 2.81` | Cloudflare Worker edge gateway (`apps/api`), Node.js investigation server on **Render.com** (`apps/scanner`), and Supabase PostgreSQL + Auth + Realtime with automatic local JSON fallback (`.data/reports.json`). |
 | **Testing & Monorepo Tooling** | ![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=flat-square&logo=vitest&logoColor=white) ![pnpm](https://img.shields.io/badge/pnpm-F69220?style=flat-square&logo=pnpm&logoColor=white) | `Vitest 4.0` / `pnpm 11.25` | 43+ unit, SSRF boundary, wallet, and scenario tests (`pnpm test`) plus Solidity contract tests (`pnpm test:contracts`). |
 
 ---
@@ -202,7 +203,7 @@ pnpm check
 flowchart LR
     U["Browser (apps/web)<br/>Next.js 16 + React 19 + Three.js"] -->|"JSON /v1/*"| GW["Edge Gateway (apps/api)<br/>Cloudflare Worker"]
     U -.->|"Local Dev (:8788)"| SC
-    GW -->|"SCANNER_ORIGIN"| SC["Scanner Service (apps/scanner)<br/>Node.js 24 + Hono"]
+    GW -->|"SCANNER_ORIGIN"| SC["Scanner Service (apps/scanner)<br/>Node.js 24 + Hono<br/>Deployed on Render.com"]
     SC --> AN["Deterministic Core (packages/analysis)<br/>Rules · Policy · Correlation · SHA-256"]
     SC -->|"Pinned Unicast IP"| T[("Target Website<br/>Passive HTTP/TLS Only")]
     SC --> INTEL["OpenPhish · URLhaus · Safe Browsing<br/>crt.sh · RDAP · CA Trust Dataset"]

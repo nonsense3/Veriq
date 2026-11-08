@@ -57,6 +57,7 @@
 - [05. Tech Stack](#05-tech-stack)
 - [06. Architecture](#06-architecture)
 - [07. Disclosures](#07-disclosures)
+- [08. Track](#08-track)
 
 ---
 
@@ -280,7 +281,7 @@ flowchart LR
 
 ---
 
-## 07. Used things
+## 07. Disclosures
 
 | Category | Used Things |
 | :--- | :--- |
@@ -290,6 +291,18 @@ flowchart LR
 | **Threat Intel & Datasets** | OpenPhish Community Feed, abuse.ch URLhaus API, Google Safe Browsing v4, `crt.sh` Certificate Transparency, `rdap.org`, and public October 2026 eMudhra CA compromise disclosures ([Cloudflare](https://blog.cloudflare.com/emudhra-certificate-compromise/), [Qualys](https://blog.qualys.com/product-tech/2026/10/23/how-to-identify-compromised-emudhra-certificates-with-qualys-cve-2026-111943-and-cve-2026-111944), [DSCI](https://www.dsci.in/files/content/advisory/2026/eMudhra%20Intermediate%20CA%20issue.pdf)). |
 | **AI Models & Tools** | **Google Gemma 4 (`gemma-4-26b-a4b-it`)** is used at runtime strictly for evidence-grounded report explanations and repository publication review. AI coding assistants were used during development for coding assistance, testing, and documentation structuring. |
 | **License** | Distributed under the **MIT License** — see [`LICENSE`](./LICENSE) for full text. |
+
+---
+
+## 08. Track
+
+**AI-Powered Web Threat Detection & Digital Trust Intelligence**
+
+Veriq combines the track's three domains:
+
+- **Artificial Intelligence:** Gemma 4 produces evidence-grounded explanations of URL, website and scam-message findings.
+- **Cybersecurity:** Passive URL and redirect inspection, phishing indicators, TLS certificate trust analysis, security configuration checks and threat intelligence support explainable risk assessments.
+- **Web3:** Ethereum Sepolia report commitments, downloadable verification bundles and independent integrity verification support tamper-evident community threat reporting.
 
 <div align="center">
 

@@ -21,9 +21,9 @@ import { config } from "./config";
 import { AppError } from "./errors";
 import { intelProviderStatus } from "./intel/providers";
 import { investigateMessage, investigateUrl } from "./pipeline";
-import { addStatementOnChain, confirmWalletCommitment, registerCommitment, registryState } from "./registry";
+import { confirmWalletCommitment, registerCommitment, registryState } from "./registry";
 import { registryRelayerStatus } from "./registry-key";
-import { correlationRecords, createStore, postgrestEq, publicSummary, type Store, type StoredReport } from "./store";
+import { correlationRecords, createStore, postgrestEq, publicStatements, publicSummary, publicText, type Store, type StoredReport } from "./store";
 
 type Env = { Variables: { correlationId: string } };
 
@@ -60,10 +60,10 @@ function repositoryEntry(record: StoredReport, clusterId: string | null): Reposi
     classification: record.report.risk.classification,
     createdAt: record.report.createdAt,
     summary,
-    note: record.note,
+    note: record.note ? publicText(record.note).slice(0, 280) : null,
     indicators,
     registry: record.registry,
-    statements: record.statements,
+    statements: publicStatements(record.statements),
     clusterId,
   };
 }
@@ -193,7 +193,7 @@ export function createApp(store: Store = createStore()) {
     const options = parsed.data;
     // Public scans are anonymous; spending the server's gas requires a verified account.
     // Wallet confirmations spend the caller's test ETH and do not need a server signing key.
-    if (!options.transactionHash) {
+    if (!options.transactionHash && record.registry.status !== "confirmed") {
       const signer = await userFromAuthorization(context.req.header("Authorization"));
       if (!signer) throw new AppError(401, "AUTH_REQUIRED", "Sign in or use your wallet", "Sign in to use the sealing service, or choose Seal with wallet to pay with Sepolia test ETH.");
       if (!relayLimit(signer.id).ok) throw new AppError(429, "RATE_LIMITED", "Please wait", "The sealing service allows three requests per account per minute. Try again later or use your wallet.", true);
@@ -309,6 +309,23 @@ export function createApp(store: Store = createStore()) {
     });
   });
 
+  app.get("/v1/repository/:publicId", async (context) => {
+    const key = context.req.param("publicId").toLowerCase();
+    const record = KEY.test(key) ? await store.byRegistryKey(key) : undefined;
+    if (!record?.published || record.registry.status !== "confirmed") throw new AppError(404, "REPORT_NOT_FOUND", "Incident not found", "This incident is private or has not been published.");
+    context.header("cache-control", "no-store");
+    return context.json({
+      ...repositoryEntry(record, null),
+      findings: record.report.findings.map((finding) => ({
+        id: finding.id, category: finding.category, severity: finding.severity,
+        title: publicText(finding.title), description: publicText(finding.description),
+        impact: publicText(finding.impact), recommendation: publicText(finding.recommendation), source: publicText(finding.source.name),
+      })),
+      checks: record.report.checks.map(({ id, label, status }) => ({ id, label: publicText(label), status })),
+      coverage: { completed: record.report.checks.filter((check) => check.status === "completed").length, total: record.report.checks.length },
+    });
+  });
+
   app.post("/v1/repository/:publicId/statements", async (context) => {
     const limit = writeLimit(clientKey(context));
     if (!limit.ok) throw new AppError(429, "RATE_LIMITED", "Slow down", `Try again in ${limit.retryAfter} seconds.`, true);
@@ -317,16 +334,19 @@ export function createApp(store: Store = createStore()) {
     const publicId = context.req.param("publicId").toLowerCase();
     if (!KEY.test(publicId)) throw new AppError(404, "REPORT_NOT_FOUND", "Report not found", "Unknown repository entry.");
     const record = await store.byRegistryKey(publicId);
-    if (!record || !record.published) throw new AppError(404, "REPORT_NOT_FOUND", "Report not found", "Unknown repository entry.");
+    if (!record || !record.published || record.registry.status !== "confirmed") throw new AppError(404, "REPORT_NOT_FOUND", "Report not found", "Unknown repository entry.");
     const parsed = statementRequestSchema.safeParse(await context.req.json().catch(() => null));
     if (!parsed.success) throw new AppError(400, "INVALID_REQUEST", "Check your statement", parsed.error.issues[0]?.message ?? "Invalid statement.");
     const createdAt = new Date().toISOString();
-    const statementHash = statementHashFor(publicId, parsed.data.kind, parsed.data.note, createdAt) as Hex;
-    const result = await addStatementOnChain(publicId as Hex, parsed.data.kind, statementHash);
+    const publicNote = publicText(parsed.data.note).slice(0, 280);
+    const statementHash = statementHashFor(publicId, parsed.data.kind, publicNote, createdAt) as Hex;
+    // Community feedback is off-chain; only the latest vote per verified account counts.
+    const previous = record.statements.filter((item) => item.authorId === author.id).at(-1);
+    if (previous?.kind === parsed.data.kind && previous.note === publicNote) return context.json(repositoryEntry(record, null));
     const updated = (await store.update(record.report.reportId, (item) => {
-      item.statements.push({ kind: parsed.data.kind, note: parsed.data.note, statementHash, transactionHash: result.transactionHash, status: result.status, createdAt });
+      item.statements.push({ kind: parsed.data.kind, note: publicNote, authorId: author.id, statementHash, transactionHash: null, status: "unregistered", createdAt });
     }))!;
-    return context.json(repositoryEntry(updated, null), result.status === "confirmed" ? 200 : 503);
+    return context.json(repositoryEntry(updated, null));
   });
 
   app.notFound((context) =>

@@ -99,6 +99,7 @@ export async function confirmWalletReceipt(client: Pick<ReturnType<typeof create
 
 export async function registerCommitment(registryKey: Hex, commitment: Hex, parentKey: Hex): Promise<RegistryReceipt> {
   const base: RegistryReceipt = { ...EMPTY_RECEIPT, registryKey, commitment, parentKey: /^0x0+$/.test(parentKey) ? null : parentKey };
+  let submitted: { transactionHash: Hex; chainId: number; contractAddress: Address } | null = null;
   try {
     const { state, publicClient, walletClient } = await clients();
     const hash = await walletClient.writeContract({
@@ -107,6 +108,7 @@ export async function registerCommitment(registryKey: Hex, commitment: Hex, pare
       functionName: "register",
       args: [registryKey, commitment, parentKey, REPORT_SCHEMA_VERSION],
     });
+    submitted = { transactionHash: hash, chainId: state.chainId, contractAddress: state.address };
     const receipt = await publicClient.waitForTransactionReceipt({ hash, timeout: 30_000 });
     return {
       ...base,
@@ -119,6 +121,7 @@ export async function registerCommitment(registryKey: Hex, commitment: Hex, pare
       error: receipt.status === "success" ? null : "Transaction reverted",
     };
   } catch (error) {
+    if (submitted) return { ...base, ...submitted, status: "pending", error: "Transaction submitted. Check its confirmation before sending another transaction." };
     const message = (error as Error).message.split("\n")[0] ?? "Registration failed";
     return { ...base, status: /unreachable|No registry|No contract|not set/.test(message) ? "unavailable" : "failed", error: message.slice(0, 300) };
   }

@@ -435,6 +435,14 @@ export const repositoryEntrySchema = z.object({
   clusterId: z.string().nullable(),
 });
 
+/** Public details omit private report IDs, raw evidence and verification nonces. */
+export const repositoryDetailSchema = repositoryEntrySchema.extend({
+  findings: z.array(findingSchema.pick({ id: true, category: true, severity: true, title: true, description: true, impact: true, recommendation: true }).extend({ source: z.string() })),
+  checks: z.array(checkSchema.pick({ id: true, label: true, status: true })),
+  coverage: z.object({ completed: z.number(), total: z.number() }),
+});
+export type RepositoryDetail = z.infer<typeof repositoryDetailSchema>;
+
 export const correlationClusterSchema = z.object({
   clusterId: z.string(),
   members: z.array(z.string()),

@@ -13,7 +13,23 @@ export function postgrestEq(column: string, value: string): string {
   return `${column}=eq.${encodeURIComponent(value)}`;
 }
 
-export type Statement = RepositoryEntry["statements"][number];
+export type Statement = RepositoryEntry["statements"][number] & { authorId?: string };
+
+/** Public prose excludes private URL paths, contact identifiers and long account values. */
+export function publicText(value: string): string {
+  return value.replace(/https?:\/\/[^\s<>"']+/gi, "[link redacted]")
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[email redacted]")
+    .replace(/0x[0-9a-f]{40,}/gi, "[address redacted]")
+    .replace(/(?:\+?\d[\d ()-]{8,}\d)/g, "[number redacted]").slice(0, 1600);
+}
+
+/** One current opinion per account; failed/pending chain submissions are not votes. */
+export function publicStatements(statements: Statement[]): RepositoryEntry["statements"] {
+  return statements.filter((statement, index, all) =>
+    (statement.status === "confirmed" || (statement.status === "unregistered" && Boolean(statement.authorId))) &&
+    (!statement.authorId || !all.slice(index + 1).some((next) => next.authorId === statement.authorId))
+  ).map(({ authorId: _privateAuthor, ...statement }) => ({ ...statement, note: publicText(statement.note).slice(0, 280) }));
+}
 
 export type StoredReport = {
   report: Report;
@@ -60,11 +76,13 @@ export function publicSummary(record: StoredReport): { summary: string; indicato
     indicators.push({ type: "domain", display: report.evidence.url.registrableDomain ?? report.evidence.url.hostname, hash: record.keys.find((key) => key.type === "url")?.value ?? "" });
   }
   for (const indicator of report.evidence.message?.indicators ?? []) {
-    if (indicator.type !== "amount") indicators.push({ type: indicator.type, display: indicator.display, hash: indicator.hash });
+    if (indicator.type === "url") {
+      try { indicators.push({ type: "domain", display: new URL(indicator.display).hostname, hash: indicator.hash }); } catch { /* Never publish an unparsed URL. */ }
+    } else if (indicator.type !== "amount") indicators.push({ type: indicator.type, display: publicText(indicator.display), hash: indicator.hash });
   }
   const lead = report.findings.find((finding) => finding.category !== "configuration" && finding.severity !== "info")?.title;
   const fallback = report.risk.summary.replace(new RegExp(`^${report.risk.label}: `), "");
-  return { summary: (lead ?? fallback).slice(0, 400), indicators: indicators.slice(0, 12) };
+  return { summary: publicText(lead ?? fallback).slice(0, 400), indicators: indicators.slice(0, 12) };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -123,13 +141,13 @@ export class SupabaseStore implements Store {
         kind: record.report.kind,
         classification: record.report.risk.classification,
         summary,
-        note: record.note,
+        note: record.note ? publicText(record.note).slice(0, 280) : null,
         indicators,
         chain_id: record.registry.chainId,
         transaction_hash: record.registry.transactionHash,
         block_number: record.registry.blockNumber,
-        confirms: record.statements.filter((statement) => statement.kind === "validate").length,
-        disputes: record.statements.filter((statement) => statement.kind === "dispute").length,
+        confirms: publicStatements(record.statements).filter((statement) => statement.kind === "validate").length,
+        disputes: publicStatements(record.statements).filter((statement) => statement.kind === "dispute").length,
         created_at: record.report.createdAt,
         updated_at: new Date().toISOString(),
       },
@@ -138,7 +156,7 @@ export class SupabaseStore implements Store {
       await this.request("repository_statements?on_conflict=statement_hash", {
         method: "POST",
         prefer: "resolution=merge-duplicates,return=minimal",
-        body: record.statements.map((statement) => ({ statement_hash: statement.statementHash, public_id: record.registryKey, kind: statement.kind, note: statement.note, transaction_hash: statement.transactionHash, status: statement.status, created_at: statement.createdAt })),
+        body: record.statements.map((statement) => ({ statement_hash: statement.statementHash, public_id: record.registryKey, kind: statement.kind, note: publicText(statement.note).slice(0, 280), transaction_hash: statement.transactionHash, status: statement.status, created_at: statement.createdAt })),
       });
     }
   }

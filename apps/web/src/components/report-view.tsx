@@ -4,7 +4,7 @@ import { RISK_DESCRIPTIONS, type Finding, type InvestigationResponse, type Publi
 import { ArrowRight, Download, ExternalLink, Fingerprint, Link2, Plus, Printer, RefreshCcw, ShieldCheck, Sparkles } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { remember } from "@/lib/history";
@@ -88,6 +88,7 @@ function RegistryCard({ response, onUpdate }: { response: InvestigationResponse;
   const [review, setReview] = useState<PublicationReview | null>(null);
   const [walletHash, setWalletHash] = useState<string | null>(null);
   const [walletStep, setWalletStep] = useState("");
+  const checks = useRef(0);
   const registry: RegistryReceipt = response.registry;
   const pendingKey = `veriq.pending-seal.${response.report.reportId}`;
 
@@ -98,19 +99,36 @@ function RegistryCard({ response, onUpdate }: { response: InvestigationResponse;
     } catch { /* Session storage is optional. */ }
   }, [pendingKey]);
 
+  // Recheck the existing transaction, never ask the wallet to pay twice.
+  useEffect(() => {
+    if (!walletHash || busy || response.registry.status === "confirmed" || checks.current >= 10) return;
+    const timer = window.setTimeout(() => { checks.current += 1; void register(false, walletHash); }, 12_000);
+    return () => window.clearTimeout(timer);
+  });
+
   async function register(confirmPublication = false, transactionHash = walletHash ?? undefined) {
     setBusy(true);
     setError(null);
     try {
-      const updated = await api.register(response.report.reportId, { publishToRepository: publish, confirmPublication, ...(transactionHash ? { transactionHash } : {}), ...(note.trim() ? { note: note.trim() } : {}) });
+      // Confirm the seal first. A publishing review must never hide a successful transaction.
+      let updated = response.registry.status === "confirmed" ? response : await api.register(response.report.reportId, { publishToRepository: false, ...(transactionHash ? { transactionHash } : {}) });
       onUpdate(updated);
       remember(updated);
       setReview(null);
       if (updated.registry.status === "confirmed") {
         setWalletHash(null);
         try { window.sessionStorage.removeItem(pendingKey); } catch { /* Optional. */ }
+        if (publish && !updated.publishedToRepository) {
+          updated = await api.register(response.report.reportId, { publishToRepository: true, confirmPublication, ...(note.trim() ? { note: note.trim() } : {}) });
+          onUpdate(updated);
+          remember(updated);
+        }
       }
       if (updated.registry.status !== "confirmed") {
+        if (updated.registry.transactionHash && updated.registry.status === "pending") {
+          setWalletHash(updated.registry.transactionHash);
+          try { window.sessionStorage.setItem(pendingKey, updated.registry.transactionHash); } catch { /* Optional. */ }
+        }
         const keyProblem = updated.registry.error?.startsWith("REGISTRY_PRIVATE_KEY ");
         const pending = updated.registry.status === "pending";
         setError({ code: pending ? "REGISTRY_PENDING" : updated.registry.status === "unavailable" ? "REGISTRY_UNAVAILABLE" : "REGISTRY_FAILED", title: pending ? "Waiting for confirmation" : keyProblem ? "Report sealing unavailable" : updated.registry.status === "unavailable" ? "Registry offline" : "Registration failed", message: pending ? "Your transaction was submitted. Check it again before sending another transaction." : keyProblem ? "We couldn’t register this report on-chain. Your report is still available. You can seal with your wallet instead." : "Your report is still available. Please try again later.", retryable: true, correlationId: "client" });
@@ -124,6 +142,21 @@ function RegistryCard({ response, onUpdate }: { response: InvestigationResponse;
     }
   }
 
+  async function shareSealed(confirmPublication = false) {
+    setBusy(true);
+    setError(null);
+    try {
+      const updated = await api.register(response.report.reportId, { publishToRepository: true, confirmPublication, ...(note.trim() ? { note: note.trim() } : {}) });
+      onUpdate(updated);
+      remember(updated);
+      setReview(null);
+    } catch (caught) {
+      const failure = caught instanceof ApiError ? caught.error : { code: "SHARE_FAILED", title: "Incident not shared", message: "Your seal is confirmed. Try sharing again shortly.", retryable: true, correlationId: "client" };
+      if (failure.code === "PUBLICATION_CONFIRMATION_REQUIRED") setReview(failure.review ?? { available: false, authentic: false, important: true, reason: failure.message });
+      else setError(failure);
+    } finally { setBusy(false); }
+  }
+
   async function registerWithWallet() {
     if (walletHash) return register(false, walletHash);
     setBusy(true);
@@ -134,6 +167,7 @@ function RegistryCard({ response, onUpdate }: { response: InvestigationResponse;
       const { sealWithWallet } = await import("@/lib/registry-wallet");
       const hash = await sealWithWallet(plan);
       setWalletHash(hash);
+      checks.current = 0;
       try { window.sessionStorage.setItem(pendingKey, hash); } catch { /* Optional. */ }
       setWalletStep("Checking transaction…");
       await register(false, hash);
@@ -164,18 +198,30 @@ function RegistryCard({ response, onUpdate }: { response: InvestigationResponse;
   }
 
   const confirmed = registry.status === "confirmed";
+  const transaction = registry.transactionHash ?? walletHash;
+  const explorer = registry.chainId === 11155111 || walletHash ? "https://sepolia.etherscan.io" : null;
+  function downloadReceipt() {
+    const receipt = { format: "veriq-seal-receipt-v1", ...registry, explorerUrl: explorer && transaction ? `${explorer}/tx/${transaction}` : null, verificationUrl: `${window.location.origin}/verify`, integrityOnly: true };
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([JSON.stringify(receipt, null, 2)], { type: "application/json" }));
+    link.download = `veriq-receipt-${response.report.reportId}.json`;
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  }
   return (
     <section aria-labelledby="registry-title" className="card" id="registry">
       <div className="card-head">
         <h2 id="registry-title">Report integrity</h2>
-        {confirmed ? <span className="d-pill d-clear"><ShieldCheck size={13} /> On-chain</span> : <span className="d-pill d-unavailable">Not registered</span>}
+        {confirmed ? <span className="d-pill d-clear"><ShieldCheck size={13} /> Confirmed on-chain</span> : <span className="d-pill d-unavailable">{transaction ? registry.status === "failed" ? "Transaction failed" : "Awaiting confirmation" : "Not registered"}</span>}
       </div>
       {confirmed ? (
         <dl className="kv">
           <div><dt>Chain</dt><dd>{registry.chainId}</dd></div>
           <div><dt>Transaction</dt><dd className="mono">{short(registry.transactionHash)}</dd></div>
           {registry.chainId === 11155111 && registry.transactionHash && <div><dt>Receipt</dt><dd><a href={`https://sepolia.etherscan.io/tx/${registry.transactionHash}`} rel="noopener noreferrer" target="_blank">View on Sepolia <ExternalLink size={12} /></a></dd></div>}
-          <div><dt>Contract</dt><dd className="mono">{short(registry.contractAddress)}</dd></div>
+          <div><dt>Contract</dt><dd className="mono">{explorer && registry.contractAddress ? <a href={`${explorer}/address/${registry.contractAddress}`} target="_blank" rel="noopener noreferrer">{short(registry.contractAddress)} <ExternalLink size={12} /></a> : short(registry.contractAddress)}</dd></div>
+          <div><dt>Record key</dt><dd className="mono wrap">{registry.registryKey}</dd></div>
+          <div><dt>Fingerprint</dt><dd className="mono wrap">{registry.commitment}</dd></div>
           <div><dt>Block</dt><dd>{registry.blockNumber}</dd></div>
           <div><dt>Repository</dt><dd>{response.publishedToRepository ? "Published" : "Private"}</dd></div>
         </dl>
@@ -190,31 +236,33 @@ function RegistryCard({ response, onUpdate }: { response: InvestigationResponse;
               <textarea className="textarea" id="incident-note" maxLength={280} onChange={(event) => setNote(event.target.value)} placeholder="Optional note, e.g. “Arrived by SMS”. No personal details." style={{ minHeight: 70 }} value={note} />
             </>
           )}
-          {review && (
-            <Notice
-              actions={
-                <>
-                  <button className="pill pill-dark pill-sm" disabled={busy} onClick={() => void register(true)} type="button">Publish anyway</button>
-                  <button className="pill pill-ghost pill-sm" onClick={() => setReview(null)} type="button">Keep private</button>
-                </>
-              }
-              title={review.authentic || review.important ? "The model flagged this" : "Confirm before publishing"}
-              tone="warning"
-            >
-              {review.reason}
-            </Notice>
-          )}
           <button className="pill pill-signal block" disabled={busy || (publish && !user)} onClick={() => void register(false)} style={{ marginTop: 10 }} type="button">
-            <Fingerprint size={15} /> {busy ? walletStep || "Sealing" : walletHash ? "Check transaction" : publish ? "Seal & share" : "Seal report"}
+            <Fingerprint size={15} /> {busy ? walletStep || (walletHash ? "Checking transaction…" : "Sealing") : walletHash ? "Check transaction" : publish ? "Seal & share" : "Seal report"}
           </button>
           {!walletHash && <button className="pill pill-ghost block" disabled={busy || (publish && !user)} onClick={() => void registerWithWallet()} style={{ marginTop: 8 }} type="button">Seal with wallet</button>}
         </>
       )}
+      {transaction && !confirmed && <Notice title={registry.status === "failed" ? "Transaction was not accepted" : "Transaction submitted"} tone={registry.status === "failed" ? "error" : "info"}>Submission is not confirmation. We recheck automatically up to ten times; you can also check again. {explorer && <a href={`${explorer}/tx/${transaction}`} target="_blank" rel="noopener noreferrer">View transaction on Sepolia <ExternalLink size={12} /></a>}</Notice>}
+      {confirmed && !response.publishedToRepository && <div style={{ display: "grid", gap: 10, marginTop: 14 }}>
+        <p className="muted small">Your seal is confirmed. You can share a redacted incident now without another blockchain transaction. Full evidence and your verification bundle stay private.</p>
+        {user ? <>
+          <label className="sr-only" htmlFor="publish-sealed-note">Public note</label>
+          <textarea className="textarea" id="publish-sealed-note" maxLength={280} value={note} onChange={(event) => setNote(event.target.value)} placeholder="Optional public note. No personal details." />
+          <button className="pill pill-signal block" disabled={busy} onClick={() => { setPublish(true); void shareSealed(); }} type="button">{busy ? "Sharing…" : "Share to repository"}</button>
+        </> : <Link href={`/sign-in?next=${encodeURIComponent(`/report?id=${response.report.reportId}`)}`}>Sign in to share your report</Link>}
+      </div>}
+      {confirmed && response.publishedToRepository && registry.registryKey && <p style={{ marginTop: 12 }}><Link className="text-link" href={`/repository?incident=${registry.registryKey}`}>Open shared incident and community reviews <ArrowRight size={13} /></Link></p>}
+      {review && <Notice title="Confirm before sharing" tone="warning" actions={<>
+        <button className="pill pill-dark pill-sm" disabled={busy} onClick={() => void shareSealed(true)} type="button">Publish redacted incident</button>
+        <button className="pill pill-ghost pill-sm" disabled={busy} onClick={() => { setPublish(false); setReview(null); }} type="button">Keep private</button>
+      </>}>{review.reason} Your blockchain seal is unaffected.</Notice>}
       {error && <div style={{ marginTop: 12 }}><ApiNotice error={error} /></div>}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 14 }}>
-        <button className="pill pill-ghost pill-sm" onClick={() => void download()} type="button"><Download size={13} /> Bundle</button>
+        <button className="pill pill-ghost pill-sm" onClick={() => void download()} type="button"><Download size={13} /> Verification bundle</button>
+        {confirmed && <button className="pill pill-ghost pill-sm" onClick={downloadReceipt} type="button"><Download size={13} /> Receipt</button>}
         <Link className="pill pill-ghost pill-sm" href="/verify">Verify</Link>
       </div>
+      {confirmed && <p className="muted small" style={{ marginTop: 10 }}>The receipt contains chain references. Use the private verification bundle on Verify to check that the report matches its fingerprint.</p>}
     </section>
   );
 }

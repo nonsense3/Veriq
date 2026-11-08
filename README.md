@@ -61,7 +61,9 @@ The Hardhat node keeps its state in memory. After restarting it, run `pnpm chain
    ```
 
    Edit any field in the bundle and run it again to see `✘ MISMATCH` (exit 1).
-5. Open `/repository` to see published incidents, campaign clusters and on-chain validate/dispute statements.
+5. Open `/repository` to see published incidents and campaign clusters. Click an incident to inspect redacted findings, configuration weaknesses, check coverage and community reasons. Signed-in accounts can confirm or dispute without a wallet fee; each account's latest review counts once. These community reviews are off-chain and do not change the original report or its seal. Existing anchored statements retain their transaction links.
+
+Confirmed reports offer **Receipt** (a JSON chain reference without private evidence) and **Verification bundle** (the private report and nonce used by the independent verifier). Keep the bundle private. The panel links to the Sepolia transaction and contract, displays the record key/fingerprint, and supports sharing a previously private seal without a second blockchain transaction. Publication review cannot hide chain confirmation; pending transactions retain their hashes and are rechecked automatically up to ten times before manual retry.
 
 ## Checks
 

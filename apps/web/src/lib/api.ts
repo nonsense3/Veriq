@@ -10,7 +10,7 @@ import type {
   RegistrationPlan,
 } from "@veriq/contracts";
 import { accessToken } from "./auth";
-import { investigationResponseSchema, myInvestigationsResponseSchema, registrationPlanSchema, repositoryEntrySchema, serviceConfigSchema } from "@veriq/contracts";
+import { repositoryDetailSchema, type RepositoryDetail, investigationResponseSchema, myInvestigationsResponseSchema, registrationPlanSchema, repositoryEntrySchema, serviceConfigSchema } from "@veriq/contracts";
 import type { ResponseSchema } from "./api-response";
 import { requestJson } from "./api-transport";
 export { ApiError } from "./api-response";
@@ -37,6 +37,7 @@ export const api = {
     request<InvestigationResponse>(`/v1/investigations/${encodeURIComponent(id)}/register`, { method: "POST", body: JSON.stringify(body), allowStatuses: [503] }, investigationResponseSchema),
   bundle: (id: string) => request<VerificationBundle>(`/v1/investigations/${encodeURIComponent(id)}/bundle`),
   repository: () => request<{ entries: RepositoryEntry[]; clusters: CorrelationCluster[] }>("/v1/repository"),
+  incident: (publicId: string) => request<RepositoryDetail>(`/v1/repository/${encodeURIComponent(publicId)}`, undefined, repositoryDetailSchema),
   statement: (publicId: string, body: StatementRequest) =>
     request<RepositoryEntry>(`/v1/repository/${encodeURIComponent(publicId)}/statements`, { method: "POST", body: JSON.stringify(body), allowStatuses: [503] }, repositoryEntrySchema),
   mine: (signal?: AbortSignal) => request<MyInvestigationsResponse>("/v1/me/investigations", signal ? { signal } : undefined, myInvestigationsResponseSchema),

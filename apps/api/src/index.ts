@@ -83,6 +83,7 @@ const ALLOWED_ROUTES: Array<{ method: string; pattern: RegExp }> = [
   { method: "GET", pattern: /^\/v1\/investigations\/[0-9a-f-]{36}\/bundle$/i },
   { method: "GET", pattern: /^\/v1\/investigations\/[0-9a-f-]{36}\/registration$/i },
   { method: "GET", pattern: /^\/v1\/repository$/ },
+  { method: "GET", pattern: /^\/v1\/repository\/0x[0-9a-f]{64}$/i },
   { method: "GET", pattern: /^\/v1\/me\/investigations$/ },
   { method: "DELETE", pattern: /^\/v1\/me$/ },
   { method: "POST", pattern: /^\/v1\/repository\/0x[0-9a-f]{64}\/statements$/i },

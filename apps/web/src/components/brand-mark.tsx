@@ -12,9 +12,9 @@ export function BrandMark({ compact = false }: { compact?: boolean }) {
         alt="" 
         aria-hidden="true"
         className="brand-mark" 
-        height={32}
+        height={40}
         src={isDark ? "/Icy White VQ Shield Logo.png" : "/Blue VQ Shield Logo.png"}
-        width={32}
+        width={40}
       />
       {!compact && <span className="brand-name">Veriq</span>}
     </span>

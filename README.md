@@ -36,7 +36,7 @@
 
 ---
 
-## Team Details — **Axiom** (HackMatrix '26)
+## Team Details — **Axiom**
 
 | # | Name | Role | GitHub Profile |
 | :-: | :--- | :--- | :--- |
